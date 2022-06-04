@@ -423,46 +423,45 @@ def main(args):
         
         f.train()
         b.train()
-        # c.train()
+        c.train()
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
-            lx, ly = next(l_iter)
-            lx, ly = lx.float().cuda(), ly.long().cuda()
+            # lx, ly = next(l_iter)
+            # lx, ly = lx.float().cuda(), ly.long().cuda()
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
             
-            ux, _ = next(u_iter)
-            ux = ux.float().cuda()
+            # ux, _ = next(u_iter)
+            # ux = ux.float().cuda()
             
-            u_out = c(b(f(ux)))
+            # u_out = c(b(f(ux)))
 
-            softmax_out = F.softmax(u_out, dim=1)
-            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            entropy = torch.sum(entropy, dim=1)
+            # softmax_out = F.softmax(u_out, dim=1)
+            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            # entropy = torch.sum(entropy, dim=1)
 
-            ent_loss = torch.mean(entropy)
+            # ent_loss = torch.mean(entropy)
 
-            msoftmax = softmax_out.mean(dim=0)
-            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+            # msoftmax = softmax_out.mean(dim=0)
+            # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
-            ent_loss -= gentropy_loss
+            # ent_loss -= gentropy_loss
             
-            loss = ent_loss
+            # loss = ent_loss
 
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+            # opt.zero_grad()
+            # loss.backward()
+            # opt.step()
             
             # opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(sx)))
+            l_loss = criterion(l_out, sy)
             
-            # l_out = c(b(f(inputs)))
-            # l_loss = criterion(l_out, targets)
-            
-            # l_loss.backward(retain_graph=True)
-            # opt.step()
+            l_loss.backward(retain_graph=True)
+            opt.step()
             
             # opt.zero_grad()
             
@@ -480,9 +479,9 @@ def main(args):
                 print('\naccuracy: %.2f%%' % (100*acc))
                 f.train()
                 b.train()
-                # c.train()
+                c.train()
         
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}_source_only.pt', f=f, b=b, c=c)
                 
 #         output_path = Path(f'./data/{args.dataset["name"]}/3shot_mixed/res34/s{args.source}_t{args.target}_{args.seed}.npz')
 #         output_path.parent.mkdir(exist_ok=True, parents=True)
