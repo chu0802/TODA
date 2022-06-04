@@ -1,0 +1,12 @@
+python main.py --mode get_features --ratio 0.2 --source 0 --target 1
+python main.py --mode get_features --ratio 0.2 --source 0 --target 2
+python main.py --mode get_features --ratio 0.2 --source 0 --target 3
+python main.py --mode get_features --ratio 0.2 --source 1 --target 0
+python main.py --mode get_features --ratio 0.2 --source 1 --target 2
+python main.py --mode get_features --ratio 0.2 --source 1 --target 3
+python main.py --mode get_features --ratio 0.2 --source 2 --target 0
+python main.py --mode get_features --ratio 0.2 --source 2 --target 1
+python main.py --mode get_features --ratio 0.2 --source 2 --target 3
+python main.py --mode get_features --ratio 0.2 --source 3 --target 0
+python main.py --mode get_features --ratio 0.2 --source 3 --target 1
+python main.py --mode get_features --ratio 0.2 --source 3 --target 2

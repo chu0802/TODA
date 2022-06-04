@@ -1,0 +1,47 @@
+source: 0
+target: 1
+
+#transfer settings
+transfer_loss_weight: 1
+
+# training settings
+seed: 1
+bsize: 32
+num_iters: 2000
+eval_interval: 100
+warmup_iters: 2000
+lambda_u: 0.1
+T: 0.05
+
+# optimizer
+lr: 0.1
+final_lr: 0.0001
+momentum: 0.9
+weight_decay: 0.0005
+
+# lr_scheduler
+lr_gamma: 0.0003
+lr_decay: 0.75
+
+# mdh
+hash_table_name: config_hash_table.pkl
+
+# configurations
+dataset_cfg:
+    OfficeHome:
+        name: OfficeHome
+        path: /work/chu980802/data/OfficeHome
+        num_classes: 65
+        domains:
+                - Art
+                - Clipart
+                - Product
+                - RealWorld
+    Office31:
+        name: Office31
+        path: /work/chu980802/data/Office31
+        num_classes: 31
+        domains:
+                - amazon
+                - dslr
+                - webcam
