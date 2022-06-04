@@ -460,7 +460,7 @@ def main(args):
             l_out = c(b(f(sx)))
             l_loss = criterion(l_out, sy)
             
-            l_loss.backward(retain_graph=True)
+            l_loss.backward()
             opt.step()
             
             # opt.zero_grad()
