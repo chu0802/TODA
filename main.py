@@ -454,7 +454,7 @@ def main(args):
             # loss.backward()
             # opt.step()
             
-            # opt.zero_grad()
+            opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             l_out = c(b(f(sx)))
