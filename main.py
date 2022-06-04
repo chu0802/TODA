@@ -432,8 +432,8 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
             
-            ux, _ = next(u_iter)
-            ux = ux.float().cuda()
+            # ux, _ = next(u_iter)
+            # ux = ux.float().cuda()
             
 #             u_out = c(b(f(ux)))
 
@@ -464,14 +464,14 @@ def main(args):
             l_loss.backward(retain_graph=True)
             opt.step()
             
-            opt.zero_grad()
+            # opt.zero_grad()
             
-            u_out = c(b(f(ux), reverse=True))
-            soft_out = F.softmax(u_out, dim=1)
-            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            # u_out = c(b(f(ux), reverse=True))
+            # soft_out = F.softmax(u_out, dim=1)
+            # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
-            u_loss.backward()
-            opt.step()
+            # u_loss.backward()
+            # opt.step()
             
             lr_scheduler.step()
             
@@ -482,7 +482,7 @@ def main(args):
                 b.train()
                 c.train()
         
-#         save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
                 
 #         output_path = Path(f'./data/{args.dataset["name"]}/3shot_mixed/res34/s{args.source}_t{args.target}_{args.seed}.npz')
 #         output_path.parent.mkdir(exist_ok=True, parents=True)
