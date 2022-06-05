@@ -412,7 +412,7 @@ def main(args):
         t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
         
         t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
-        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize*2, train=True)
+        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
         
         t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
         t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
