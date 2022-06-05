@@ -386,15 +386,15 @@ def main(args):
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
+        # load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
         
         for param in c.parameters():
             param.requires_grad = False
         
         params = [
             {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
-            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
-            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+            # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
         ]
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
