@@ -386,19 +386,19 @@ def main(args):
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
         
-        # for param in c.parameters():
-        #     param.requires_grad = False
+        for param in c.parameters():
+            param.requires_grad = False
         
-        # params = [
-        #     {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
-        #     {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
-        #     {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
-        # ]
+        params = [
+            {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
+            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+        ]
         
-        # opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
-        # lr_scheduler = LR_Scheduler(opt, args.num_iters)
+        opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+        lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
         s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
@@ -421,22 +421,17 @@ def main(args):
         u_iter = iter(t_unlabeled_train_loader)
         criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
         
-        acc = evaluation(t_unlabeled_test_loader, f, b, c)
-        print('\naccuracy: %.2f%%' % (100*acc))
-        exit()
-
         f.train()
         b.train()
-        c.train()
+        # c.train()
 
-        
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
-            # lx, ly = next(l_iter)
-            # lx, ly = lx.float().cuda(), ly.long().cuda()
+            lx, ly = next(l_iter)
+            lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.long().cuda()
             
             # ux, _ = next(u_iter)
             # ux = ux.float().cuda()
@@ -463,8 +458,8 @@ def main(args):
             opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(sx)))
-            l_loss = criterion(l_out, sy)
+            l_out = c(b(f(lx)))
+            l_loss = criterion(l_out, ly)
             
             l_loss.backward()
             opt.step()
@@ -485,7 +480,7 @@ def main(args):
                 print('\naccuracy: %.2f%%' % (100*acc))
                 f.train()
                 b.train()
-                c.train()
+                # c.train()
         
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}_source_only.pt', f=f, b=b, c=c)
                 
