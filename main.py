@@ -430,39 +430,39 @@ def main(args):
             # lx, ly = next(l_iter)
             # lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.long().cuda()
             
-            # ux, _ = next(u_iter)
-            # ux = ux.float().cuda()
+            ux, _ = next(u_iter)
+            ux = ux.float().cuda()
             
-            # u_out = c(b(f(ux)))
+            u_out = c(b(f(ux)))
 
-            # softmax_out = F.softmax(u_out, dim=1)
-            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            # entropy = torch.sum(entropy, dim=1)
+            softmax_out = F.softmax(u_out, dim=1)
+            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            entropy = torch.sum(entropy, dim=1)
 
-            # ent_loss = torch.mean(entropy)
+            ent_loss = torch.mean(entropy)
 
-            # msoftmax = softmax_out.mean(dim=0)
-            # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+            msoftmax = softmax_out.mean(dim=0)
+            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
-            # ent_loss -= gentropy_loss
+            ent_loss -= gentropy_loss
             
-            # loss = ent_loss
+            loss = ent_loss
 
-            # opt.zero_grad()
-            # loss.backward()
-            # opt.step()
-            
             opt.zero_grad()
+            loss.backward()
+            opt.step()
+            
+            # opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(sx)))
-            l_loss = criterion(l_out, sy)
+            # l_out = c(b(f(sx)))
+            # l_loss = criterion(l_out, sy)
             
-            l_loss.backward()
-            opt.step()
+            # l_loss.backward()
+            # opt.step()
             
             # opt.zero_grad()
             
