@@ -386,10 +386,10 @@ def main(args):
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}.pt', f=f, b=b, c=c)
         
         # for param in c.parameters():
-            # param.requires_grad = False
+        #     param.requires_grad = False
         
         # params = [
         #     {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
@@ -420,11 +420,11 @@ def main(args):
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
         criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
-
+        
         acc = evaluation(t_unlabeled_test_loader, f, b, c)
         print('\naccuracy: %.2f%%' % (100*acc))
         exit()
-        
+
         f.train()
         b.train()
         c.train()
