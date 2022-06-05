@@ -465,9 +465,14 @@ def main(args):
             l_loss.backward()
             opt.step()
             
+            for param in c.parameters():
+                param.requires_grad = False
+
             opt.zero_grad()
             
-            u_out = c(b(f(ux), reverse=True))
+            # u_out = c(b(f(ux), reverse=True))
+            u_out = c(b(f(ux)))
+
             soft_out = F.softmax(u_out, dim=1)
             u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
@@ -475,6 +480,9 @@ def main(args):
             opt.step()
             
             lr_scheduler.step()
+
+            for param in c.parameters():
+                param.requires_grad = True
             
             if i % args.eval_interval == 0:
                 acc = evaluation(t_unlabeled_test_loader, f, b, c)
