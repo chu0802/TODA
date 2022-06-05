@@ -262,15 +262,15 @@ def main(args):
 #         b = BottleNeck(f.last_dim, bottleneck_dim, nonlinear=False).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-#         load(f'{args.dataset["name"]}/s{args.source}_{args.source + 2020}.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/s{args.source}_{args.source + 2020}.pt', f=f, b=b, c=c)
         
-#         for param in c.parameters():
-#             param.requires_grad = False
+        for param in c.parameters():
+            param.requires_grad = False
         
         params = [
             {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
-            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
-            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+            # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
         ]
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
@@ -287,52 +287,52 @@ def main(args):
         criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
         for i in range(1, args.num_iters+1):
             print('Iterations: %3d/%3d' % (i, args.num_iters), end='\r')
-            sx, sy = next(s_iter)
+            # sx, sy = next(s_iter)
             tx, _ = next(t_iter)
-            sx, sy = sx.cuda().float(), sy.cuda().long()
+            # sx, sy = sx.cuda().float(), sy.cuda().long()
             tx = tx.cuda().float()
             
+            # opt.zero_grad()
+            
+            # s_out = c(b(f(sx)))
+            # s_loss = criterion(s_out, sy)
+            
+            # s_loss.backward(retain_graph=True)
+            # opt.step()
+            
+            # opt.zero_grad()
+            
+            # t_out = c(b(f(tx), reverse=False))
+            # soft_out = F.softmax(t_out, dim=1)
+            # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            # u_loss.backward()
+            
+            # opt.step()
+            # lr_scheduler.step()
+
+            softmax_out = F.softmax(c(b(f(tx))), dim=1)
+            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            entropy = torch.sum(entropy, dim=1)
+
+            ent_loss = torch.mean(entropy)
+
+            msoftmax = softmax_out.mean(dim=0)
+            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+
+            ent_loss -= gentropy_loss
+            loss = ent_loss
+
             opt.zero_grad()
-            
-            s_out = c(b(f(sx)))
-            s_loss = criterion(s_out, sy)
-            
-            s_loss.backward(retain_graph=True)
-            opt.step()
-            
-            opt.zero_grad()
-            
-            t_out = c(b(f(tx), reverse=False))
-            soft_out = F.softmax(t_out, dim=1)
-            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
-            u_loss.backward()
-            
+            loss.backward()
             opt.step()
             lr_scheduler.step()
-
-#             softmax_out = F.softmax(c(b(f(tx))), dim=1)
-#             entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-#             entropy = torch.sum(entropy, dim=1)
-
-#             ent_loss = torch.mean(entropy)
-
-#             msoftmax = softmax_out.mean(dim=0)
-#             gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
-
-#             ent_loss -= gentropy_loss
-#             loss = ent_loss
-
-#             opt.zero_grad()
-#             loss.backward()
-#             opt.step()
-#             lr_scheduler.step()
 
             if i % args.eval_interval == 0:
                 t_acc = evaluation(t_test_loader, f, b, c)
                 print('\ntarget accuracy: %.2f%%' % (100*t_acc))
                 f.train()
                 b.train()
-                c.train()
+                # c.train()
 #         s2t_shot_train(args, (s_test_loader, t_train_loader, t_test_loader), (f, c), opt)
         
 #         sf = get_features(s_test_loader, f)
