@@ -381,12 +381,13 @@ def main(args):
         with open(output_path, 'wb') as f:
             np.savez(f, s=sf, t=tf)
     if args.mode == '3shot':
-        bottleneck_dim = 512
-        f = ResBase(backbone='resnet34', pretrained=True).cuda()
+        bottleneck_dim = 256
+        f = ResBase(backbone='resnet50', pretrained=True).cuda()
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/s{args.source}_{args.source + 2020}.pt', f=f, b=b, c=c)
+        # load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
         
         for param in c.parameters():
             param.requires_grad = False
