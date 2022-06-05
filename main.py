@@ -431,8 +431,8 @@ def main(args):
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.long().cuda()
             
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
@@ -458,34 +458,25 @@ def main(args):
             
             opt.zero_grad()
             
-            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(inputs)))
-            l_loss = criterion(l_out, targets)
+            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(lx)))
+            l_loss = criterion(l_out, ly)
             
             l_loss.backward()
             opt.step()
             
-            for param in c.parameters():
-                param.requires_grad = False
-
             opt.zero_grad()
             
-            # u_out = c(b(f(ux), reverse=True))
-            u_out = c(b(f(ux)))
-
+            u_out = c(b(f(ux), reverse=True))
+            
             soft_out = F.softmax(u_out, dim=1)
-            msoftmax = soft_out.mean(dim=0)
-            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
-            u_loss = args.lambda_u * (torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1)) - gentropy_loss)
+            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
             u_loss.backward()
             opt.step()
             
             lr_scheduler.step()
 
-            for param in c.parameters():
-                param.requires_grad = True
-            
             if i % args.eval_interval == 0:
                 acc = evaluation(t_unlabeled_test_loader, f, b, c)
                 print('\naccuracy: %.2f%%' % (100*acc))
