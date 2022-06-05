@@ -138,7 +138,7 @@ class BottleNeck(nn.Module):
         x = self.bottleneck(x)
         if reverse:
             x = grad_reverse(x)
-#         return F.normalize(x)
+        # return F.normalize(x)
         return self.bn(x)
 
 class Classifier(nn.Module):
