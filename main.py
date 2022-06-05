@@ -386,7 +386,7 @@ def main(args):
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
-        # load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
         
         for param in c.parameters():
             param.requires_grad = False
