@@ -474,7 +474,9 @@ def main(args):
             u_out = c(b(f(ux)))
 
             soft_out = F.softmax(u_out, dim=1)
-            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            msoftmax = soft_out.mean(dim=0)
+            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+            u_loss = args.lambda_u * (torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1)) - gentropy_loss)
             
             u_loss.backward()
             opt.step()
