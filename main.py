@@ -469,7 +469,7 @@ def main(args):
 
             ent_loss -= gentropy_loss
             
-            loss = ent_loss
+            loss = args.lambda_u * ent_loss
 
             opt.zero_grad()
             loss.backward()
