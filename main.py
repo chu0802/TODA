@@ -475,7 +475,7 @@ def main(args):
             loss.backward()
             opt.step()
             
-            # lr_scheduler.step()
+            lr_scheduler.step()
 
             if i % args.eval_interval == 0:
                 acc = evaluation(t_unlabeled_test_loader, f, b, c)
