@@ -513,7 +513,7 @@ def main(args):
                 b.train()
                 c.train()
         
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}_target_only.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
                 
 #         output_path = Path(f'./data/{args.dataset["name"]}/3shot_mixed/res34/s{args.source}_t{args.target}_{args.seed}.npz')
 #         output_path.parent.mkdir(exist_ok=True, parents=True)
