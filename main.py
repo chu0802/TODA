@@ -400,8 +400,8 @@ def main(args):
         #     # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
         # ]
         
-        opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
-        lr_scheduler = LR_Scheduler(opt, args.num_iters)
+        # opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+        # lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
         s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
