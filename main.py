@@ -448,8 +448,8 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
             
-            ux, _ = next(u_iter)
-            ux = ux.float().cuda()
+            # ux, _ = next(u_iter)
+            # ux = ux.float().cuda()
 
             opt.zero_grad()
             
@@ -482,24 +482,24 @@ def main(args):
             # u_loss.backward()
             # opt.step()
 
-            u_out = c(b(f(ux)))
+            # u_out = c(b(f(ux)))
 
-            softmax_out = F.softmax(u_out, dim=1)
-            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            entropy = torch.sum(entropy, dim=1)
+            # softmax_out = F.softmax(u_out, dim=1)
+            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            # entropy = torch.sum(entropy, dim=1)
 
-            ent_loss = torch.mean(entropy)
+            # ent_loss = torch.mean(entropy)
 
-            # msoftmax = softmax_out.mean(dim=0)
-            # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+            # # msoftmax = softmax_out.mean(dim=0)
+            # # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
-            # ent_loss -= gentropy_loss
+            # # ent_loss -= gentropy_loss
             
-            loss = args.lambda_u * ent_loss
+            # loss = args.lambda_u * ent_loss
 
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+            # opt.zero_grad()
+            # loss.backward()
+            # opt.step()
 
             # for param in c.parameters():
             #     param.requires_grad = True
