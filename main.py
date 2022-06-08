@@ -387,16 +387,18 @@ def main(args):
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
         # load(f'{args.dataset["name"]}/s{args.source}_{args.source + 2020}.pt', f=f, b=b, c=c)
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}_source_only.pt', f=f, b=b, c=c)
+        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}.pt', f=f, b=b, c=c)
         
-        for param in c.parameters():
-            param.requires_grad = False
         
-        params = [
-            {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
-            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr}
-            # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
-        ]
+
+        # for param in c.parameters():
+            # param.requires_grad = False
+        
+        # params = [
+        #     {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
+        #     {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+        #     # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+        # ]
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
@@ -410,6 +412,9 @@ def main(args):
         
         t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
         t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+
+        t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
+        t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
         
         t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
         t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
@@ -417,6 +422,15 @@ def main(args):
         t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
         t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
         
+        sf = get_features(s_test_loader, f, b)
+        tlf = get_features(t_labeled_test_loader, f, b)
+        tuf = get_features(t_unlabeled_test_loader, f, b)
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/s{args.source}_t{args.target}_{args.seed}.npz')
+        output_path.parent.mkdir(exist_ok=True, parents=True)
+        with open(output_path, 'wb') as f:
+            np.savez(f, s=sf, tl=tlf, tu=tuf)
+
+        exit()
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
