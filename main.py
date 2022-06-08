@@ -451,29 +451,29 @@ def main(args):
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
 
+            # opt.zero_grad()
+            
+            # # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            # l_out = c(b(f(sx)))
+            # l_loss = criterion(l_out, sy)
+            
+            # l_loss.backward()
+            # opt.step()
+
+            # for param in c.parameters():
+            #     param.requires_grad = False
+            
             opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(sx)))
-            l_loss = criterion(l_out, sy)
+            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(inputs)))
+            l_loss = criterion(l_out, targets)
             
             l_loss.backward()
             opt.step()
 
-            for param in c.parameters():
-                param.requires_grad = False
-            
-            opt.zero_grad()
-            
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(lx)))
-            l_loss = criterion(l_out, ly)
-            
-            l_loss.backward()
-            opt.step()
-
-            for param in c.parameters():
-                param.requires_grad = True
+            # for param in c.parameters():
+            #     param.requires_grad = True
             
             opt.zero_grad()
             
