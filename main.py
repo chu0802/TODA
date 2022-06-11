@@ -387,17 +387,17 @@ def main(args):
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
         # load(f'{args.dataset["name"]}/s{args.source}_{args.source + 2020}.pt', f=f, b=b, c=c)
-        load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}.pt', f=f, b=b, c=c)
+        # load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.source + 2020}.pt', f=f, b=b, c=c)
         
         
 
-        for param in c.parameters():
-            param.requires_grad = False
+        # for param in c.parameters():
+        #     param.requires_grad = False
         
         params = [
             {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
-            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr}
-            # {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
+            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
         ]
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
@@ -451,17 +451,17 @@ def main(args):
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
 
-            # opt.zero_grad()
+            opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            # l_out = c(b(f(inputs)))
-            # l_loss = criterion(l_out, targets)
+            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(inputs)))
+            l_loss = criterion(l_out, targets)
             
-            # l_loss.backward()
-            # opt.step()
+            l_loss.backward()
+            opt.step()
 
-            # for param in c.parameters():
-            #     param.requires_grad = False
+            for param in c.parameters():
+                param.requires_grad = False
             
             # opt.zero_grad()
             
@@ -490,10 +490,10 @@ def main(args):
 
             ent_loss = torch.mean(entropy)
 
-            msoftmax = softmax_out.mean(dim=0)
-            gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+            # msoftmax = softmax_out.mean(dim=0)
+            # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
-            ent_loss -= gentropy_loss
+            # ent_loss -= gentropy_loss
             
             loss = args.lambda_u * ent_loss
 
@@ -501,8 +501,8 @@ def main(args):
             loss.backward()
             opt.step()
 
-            # for param in c.parameters():
-            #     param.requires_grad = True
+            for param in c.parameters():
+                param.requires_grad = True
             
             lr_scheduler.step()
 
@@ -515,14 +515,14 @@ def main(args):
         
         save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
                 
-#         output_path = Path(f'./data/{args.dataset["name"]}/3shot_mixed/res34/s{args.source}_t{args.target}_{args.seed}.npz')
-#         output_path.parent.mkdir(exist_ok=True, parents=True)
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot_shot_e2e/s{args.source}_t{args.target}_{args.seed}.npz')
+        output_path.parent.mkdir(exist_ok=True, parents=True)
         
-#         sf = get_features(s_test_loader, f)
-#         tlf = get_features(t_labeled_test_loader, f)
-#         tuf = get_features(t_unlabeled_test_loader, f)
-#         with open(output_path, 'wb') as file:
-#             np.savez(file, s=sf, tl=tlf, tu=tuf)
+        sf = get_features(s_test_loader, f, b)
+        tlf = get_features(t_labeled_test_loader, f, b)
+        tuf = get_features(t_unlabeled_test_loader, f, b)
+        with open(output_path, 'wb') as file:
+            np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
