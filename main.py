@@ -422,15 +422,6 @@ def main(args):
         t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
         t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
         
-        # sf = get_features(s_test_loader, f, b)
-        # tlf = get_features(t_labeled_test_loader, f, b)
-        # tuf = get_features(t_unlabeled_test_loader, f, b)
-        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/s{args.source}_t{args.target}_{args.seed}.npz')
-        # output_path.parent.mkdir(exist_ok=True, parents=True)
-        # with open(output_path, 'wb') as f:
-        #     np.savez(f, s=sf, tl=tlf, tu=tuf)
-
-        # exit()
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
@@ -472,34 +463,34 @@ def main(args):
             # l_loss.backward()
             # opt.step()
             
-            # opt.zero_grad()
+            opt.zero_grad()
             
-            # u_out = c(b(f(ux), reverse=True))
+            u_out = c(b(f(ux), reverse=True))
             
-            # soft_out = F.softmax(u_out, dim=1)
-            # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            soft_out = F.softmax(u_out, dim=1)
+            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
-            # u_loss.backward()
-            # opt.step()
+            u_loss.backward()
+            opt.step()
 
-            u_out = c(b(f(ux)))
+            # u_out = c(b(f(ux)))
 
-            softmax_out = F.softmax(u_out, dim=1)
-            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            entropy = torch.sum(entropy, dim=1)
+            # softmax_out = F.softmax(u_out, dim=1)
+            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            # entropy = torch.sum(entropy, dim=1)
 
-            ent_loss = torch.mean(entropy)
+            # ent_loss = torch.mean(entropy)
 
             # msoftmax = softmax_out.mean(dim=0)
             # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
             # ent_loss -= gentropy_loss
             
-            loss = args.lambda_u * ent_loss
+            # loss = args.lambda_u * ent_loss
 
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+            # opt.zero_grad()
+            # loss.backward()
+            # opt.step()
 
             for param in c.parameters():
                 param.requires_grad = True
@@ -513,9 +504,9 @@ def main(args):
                 b.train()
                 c.train()
         
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
                 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot_shot_e2e/s{args.source}_t{args.target}_{args.seed}.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot_mme/s{args.source}_t{args.target}_{args.seed}.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
