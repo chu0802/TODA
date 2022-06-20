@@ -255,6 +255,72 @@ def main(args):
         output_path.parent.mkdir(exist_ok=True, parents=True)
         with open(output_path, 'wb') as file:
             np.savez(file, s=sf, t=tf)
+    if args.mode == 'e2e_shot':
+        bottleneck_dim = 256
+        f = ResBase(backbone='resnet50', pretrained=True).cuda()
+        b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
+        c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
+
+        params = [
+            {'params': f.parameters(), 'base_lr': args.lr*0.1, 'lr': args.lr*0.1},
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
+            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+        ]
+
+        opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+        lr_scheduler = LR_Scheduler(opt, args.num_iters)
+        
+        s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
+        s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
+        t_train_dset, t_train_loader = load_img_data(args, args.target, train=True)
+        t_test_dset, t_test_loader = load_img_data(args, args.target, train=False)
+
+        s_iter = iter(s_train_loader)
+        t_iter = iter(t_train_loader)
+        
+        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
+        for i in range(1, args.num_iters+1):
+            print('Iterations: %3d/%3d' % (i, args.num_iters), end='\r')
+            sx, sy = next(s_iter)
+            tx, _ = next(t_iter)
+            sx, sy = sx.cuda().float(), sy.cuda().long()
+            tx = tx.cuda().float()
+            
+            opt.zero_grad()
+            
+            s_out = c(b(f(sx)))
+            s_loss = criterion(s_out, sy)
+            
+            s_loss.backward(retain_graph=True)
+            opt.step()
+
+            for param in c.parameters():
+                param.requires_grad = False
+            
+            # opt.zero_grad()
+        
+            softmax_out = F.softmax(c(b(f(tx))), dim=1)
+            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            entropy = torch.sum(entropy, dim=1)
+
+            ent_loss = torch.mean(entropy)
+            loss = ent_loss
+
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            lr_scheduler.step()
+
+            for param in c.parameters():
+                param.requires_grad = True
+
+            if i % args.eval_interval == 0:
+                t_acc = evaluation(t_test_loader, f, b, c)
+                print('\ntarget accuracy: %.2f%%' % (100*t_acc))
+                f.train()
+                b.train()
+                c.train()
+                
     if args.mode == 's2t':
         bottleneck_dim = 256
         f = ResBase(backbone='resnet50', pretrained=True).cuda()
