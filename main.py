@@ -299,7 +299,7 @@ def main(args):
             
             # opt.zero_grad()
         
-            softmax_out = F.softmax(c(b(f(tx, reverse=True))), dim=1)
+            softmax_out = F.softmax(c(b(f(tx), reverse=True)), dim=1)
             entropy = -softmax_out * torch.log(softmax_out + 1e-5)
             entropy = torch.sum(entropy, dim=1)
 
