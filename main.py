@@ -294,12 +294,12 @@ def main(args):
             s_loss.backward(retain_graph=True)
             opt.step()
 
-            for param in c.parameters():
-                param.requires_grad = False
+            # for param in c.parameters():
+            #     param.requires_grad = False
             
             # opt.zero_grad()
         
-            softmax_out = F.softmax(c(b(f(tx))), dim=1)
+            softmax_out = F.softmax(c(b(f(tx, reverse=True))), dim=1)
             entropy = -softmax_out * torch.log(softmax_out + 1e-5)
             entropy = torch.sum(entropy, dim=1)
 
@@ -311,8 +311,8 @@ def main(args):
             opt.step()
             lr_scheduler.step()
 
-            for param in c.parameters():
-                param.requires_grad = True
+            # for param in c.parameters():
+            #     param.requires_grad = True
 
             if i % args.eval_interval == 0:
                 t_acc = evaluation(t_test_loader, f, b, c)
