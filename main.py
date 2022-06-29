@@ -304,7 +304,7 @@ def main(args):
             entropy = torch.sum(entropy, dim=1)
 
             ent_loss = torch.mean(entropy)
-            loss = ent_loss
+            loss = args.lambda_u * ent_loss
 
             opt.zero_grad()
             loss.backward()
