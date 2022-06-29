@@ -299,16 +299,27 @@ def main(args):
             
             # opt.zero_grad()
         
-            softmax_out = F.softmax(c(b(f(tx), reverse=True)), dim=1)
-            entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            entropy = torch.sum(entropy, dim=1)
+            # softmax_out = F.softmax(c(b(f(tx), reverse=True)), dim=1)
+            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+            # entropy = torch.sum(entropy, dim=1)
 
-            ent_loss = torch.mean(entropy)
-            loss = args.lambda_u * ent_loss
+            # ent_loss = torch.mean(entropy)
+            # loss = args.lambda_u * ent_loss
+
+            # opt.zero_grad()
+            # loss.backward()
+            # opt.step()
 
             opt.zero_grad()
-            loss.backward()
+            
+            u_out = c(b(f(tx), reverse=True))
+            
+            soft_out = F.softmax(u_out, dim=1)
+            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            
+            u_loss.backward()
             opt.step()
+
             lr_scheduler.step()
 
             # for param in c.parameters():
