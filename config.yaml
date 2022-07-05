@@ -7,7 +7,7 @@ transfer_loss_weight: 1
 # training settings
 seed: 2020
 bsize: 32
-num_iters: 2000
+num_iters: 1000
 eval_interval: 100
 warmup_iters: 2000
 lambda_u: 0.1

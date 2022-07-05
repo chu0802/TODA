@@ -501,16 +501,16 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
-        
+        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
+        criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
         c.train()
 
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
-            # lx, ly = next(l_iter)
-            # lx, ly = lx.float().cuda(), ly.long().cuda()
+            lx, ly = next(l_iter)
+            lx, ly = lx.float().cuda(), ly.long().cuda()
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -520,9 +520,9 @@ def main(args):
 
             opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(sx)))
-            l_loss = criterion(l_out, sy)
+            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(inputs)))
+            l_loss = criterion(l_out, targets)
             
             l_loss.backward()
             opt.step()
@@ -579,17 +579,17 @@ def main(args):
                 f.train()
                 b.train()
                 c.train()
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}_source_only.pt', f=f, b=b, c=c)
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}.pt', f=f, b=b, c=c)
                 
-        # output_path = Path(f'./data/{args.dataset["name"]}/3shot_mme/s{args.source}_t{args.target}_{args.seed}.npz')
-        # output_path.parent.mkdir(exist_ok=True, parents=True)
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/s{args.source}_t{args.target}_{args.seed}.npz')
+        output_path.parent.mkdir(exist_ok=True, parents=True)
         
-        # sf = get_features(s_test_loader, f, b)
-        # tlf = get_features(t_labeled_test_loader, f, b)
-        # tuf = get_features(t_unlabeled_test_loader, f, b)
-        # with open(output_path, 'wb') as file:
-        #     np.savez(file, s=sf, tl=tlf, tu=tuf)
+        sf = get_features(s_test_loader, f, b)
+        tlf = get_features(t_labeled_test_loader, f, b)
+        tuf = get_features(t_unlabeled_test_loader, f, b)
+        with open(output_path, 'wb') as file:
+            np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
