@@ -521,8 +521,8 @@ def main(args):
             opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(tx)))
-            l_loss = criterion(l_out, ty)
+            l_out = c(b(f(lx)))
+            l_loss = criterion(l_out, ly)
             
             l_loss.backward()
             opt.step()
