@@ -458,8 +458,8 @@ def main(args):
         with open(output_path, 'wb') as f:
             np.savez(f, s=sf, t=tf)
     if args.mode == '3shot':
-        bottleneck_dim = 512
-        f = ResBase(backbone='resnet34', pretrained=True).cuda()
+        bottleneck_dim = 256
+        f = ResBase(backbone='resnet50', pretrained=True).cuda()
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
         
@@ -580,9 +580,9 @@ def main(args):
                 b.train()
                 c.train()
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res50/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
                 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/s{args.source}_t{args.target}_{args.seed}/s.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res50/s{args.source}_t{args.target}_{args.seed}/s.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
