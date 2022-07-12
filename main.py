@@ -509,8 +509,8 @@ def main(args):
 
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
-            # lx, ly = next(l_iter)
-            # lx, ly = lx.float().cuda(), ly.long().cuda()
+            lx, ly = next(l_iter)
+            lx, ly = lx.float().cuda(), ly.long().cuda()
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -521,15 +521,25 @@ def main(args):
             opt.zero_grad()
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(lx)))
+            l_loss = criterion(l_out, ly)
+            
+            l_loss.backward()
+            opt.step()
+
+            for param in c.parameters():
+                param.requires_grad = False
+            
+            opt.zero_grad()
+            
             l_out = c(b(f(sx)))
             l_loss = criterion(l_out, sy)
             
             l_loss.backward()
             opt.step()
 
-            # for param in c.parameters():
-            #     param.requires_grad = False
-            
+            for param in c.parameters():
+                param.requires_grad = True
             # opt.zero_grad()
             
             # # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
@@ -567,9 +577,6 @@ def main(args):
             # opt.zero_grad()
             # loss.backward()
             # opt.step()
-
-            # for param in c.parameters():
-            #     param.requires_grad = True
             
             lr_scheduler.step()
 
@@ -580,9 +587,9 @@ def main(args):
                 b.train()
                 c.train()
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
                 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/t+s.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
