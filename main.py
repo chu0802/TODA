@@ -526,7 +526,7 @@ def main(args):
 
             soft_out = F.softmax(l_out, dim=1)
             h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
-            loss = (1 - args.lambda_u) * l_loss - args.lambda_u * h_loss
+            loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
             loss.backward()
             opt.step()
