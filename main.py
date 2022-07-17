@@ -528,7 +528,7 @@ def main(args):
             l_out = c(b(f(inputs)))
             l_log_softmax_out = F.log_softmax(l_out, dim=1)
             l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
-            addi = -(i/65).sum(dim=1)
+            addi = -(l_log_softmax_out/65).sum(dim=1)
 
             loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * addi).mean()
 
