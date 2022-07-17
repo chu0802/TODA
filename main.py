@@ -530,7 +530,7 @@ def main(args):
             
             l_loss.backward()
             opt.step()
-            print('iteration: %03d/%03d, lr: %.4f, h_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), h_loss.item()), end='\r')
+            print('iteration: %03d/%03d, lr: %.4f, h_loss: %.4f, loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), h_loss.item(), loss.item()), end='\r')
             # for param in c.parameters():
             #     param.requires_grad = False
             
