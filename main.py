@@ -508,7 +508,7 @@ def main(args):
         c.train()
 
         for i in range(1, args.num_iters+1):
-            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
+            
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
@@ -530,7 +530,7 @@ def main(args):
             
             l_loss.backward()
             opt.step()
-
+            print('iteration: %03d/%03d, lr: %.4f, h_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), h_loss.item()), end='\r')
             # for param in c.parameters():
             #     param.requires_grad = False
             
