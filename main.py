@@ -508,7 +508,7 @@ def main(args):
         c.train()
 
         for i in range(1, args.num_iters+1):
-            
+            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
@@ -526,11 +526,10 @@ def main(args):
 
             soft_out = F.softmax(l_out, dim=1)
             h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
-            loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
+            loss = (1 - args.lambda_u) * l_loss - args.lambda_u * h_loss
             
-            l_loss.backward()
+            loss.backward()
             opt.step()
-            print('iteration: %03d/%03d, lr: %.4f, h_loss: %.4f, loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), h_loss.item(), loss.item()), end='\r')
             # for param in c.parameters():
             #     param.requires_grad = False
             
