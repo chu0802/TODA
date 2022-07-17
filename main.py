@@ -505,8 +505,8 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
-        # criterion = nn.CrossEntropyLoss()
+        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
+        criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
         c.train()
@@ -526,13 +526,17 @@ def main(args):
             
             inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             l_out = c(b(f(inputs)))
-            l_loss = criterion(l_out, targets)
+            l_log_softmax_out = F.log_softmax(l_out, dim=1)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
+            addi = -(i/65).sum(dim=1)
+
+            loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * addi).mean()
 
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            l_loss.backward()
+            loss.backward()
             opt.step()
             # for param in c.parameters():
             #     param.requires_grad = False
