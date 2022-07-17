@@ -501,8 +501,8 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
-        # criterion = nn.CrossEntropyLoss()
+        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
+        criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
         c.train()
@@ -520,26 +520,30 @@ def main(args):
 
             opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(lx)))
-            l_loss = criterion(l_out, ly)
+            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(inputs)))
+            l_loss = criterion(l_out, targets)
+
+            soft_out = F.softmax(u_out, dim=1)
+            h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            loss = (1 - args.lambda_u) * l_loss - args.lambda_u * h_loss
             
             l_loss.backward()
             opt.step()
 
-            for param in c.parameters():
-                param.requires_grad = False
+            # for param in c.parameters():
+            #     param.requires_grad = False
             
-            opt.zero_grad()
+            # opt.zero_grad()
             
-            l_out = c(b(f(sx)))
-            l_loss = criterion(l_out, sy)
+            # l_out = c(b(f(sx)))
+            # l_loss = criterion(l_out, sy)
             
-            l_loss.backward()
-            opt.step()
+            # l_loss.backward()
+            # opt.step()
 
-            for param in c.parameters():
-                param.requires_grad = True
+            # for param in c.parameters():
+            #     param.requires_grad = True
             # opt.zero_grad()
             
             # # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
@@ -589,7 +593,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
                 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/t+s_label_smoothing.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s+t_variational_label_smoothing.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
