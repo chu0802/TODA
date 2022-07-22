@@ -74,13 +74,10 @@ class CrossEntropyLabelSmooth(nn.Module):
         self.epsilon = epsilon
     def forward(self, inputs, targets):
         log_probs = F.log_softmax(inputs, dim=1)
-        print(log_probs.shape)
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).cpu(), 1).cuda()
-        print(targets.shape)
         targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
-        print(targets.shape)
         loss = (- targets * log_probs).sum(dim=1)
-        exit()
+
         return loss.mean()
 
 
@@ -505,8 +502,8 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
-        criterion = nn.CrossEntropyLoss()
+        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'])
+        # criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
         c.train()
@@ -529,9 +526,9 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             l_out = c(b(f(sx)))
-            # loss = criterion(l_out, sy)
-            l_log_softmax_out = F.log_softmax(l_out, dim=1)
-            l_loss = -(soft_sy * l_log_softmax_out).sum(axis=1).mean()
+            loss = criterion(l_out, sy)
+            # l_log_softmax_out = F.log_softmax(l_out, dim=1)
+            # l_loss = -(soft_sy * l_log_softmax_out).sum(axis=1).mean()
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
             # addi = -(l_log_softmax_out/65).sum(dim=1)
 
@@ -541,7 +538,7 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            l_loss.backward()
+            loss.backward()
             opt.step()
             # for param in c.parameters():
             #     param.requires_grad = False
@@ -606,14 +603,14 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_soft_labels.npz')
-        output_path.parent.mkdir(exist_ok=True, parents=True)
+        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_soft_labels.npz')
+        # output_path.parent.mkdir(exist_ok=True, parents=True)
         
-        sf = get_features(s_test_loader, f, b)
-        tlf = get_features(t_labeled_test_loader, f, b)
-        tuf = get_features(t_unlabeled_test_loader, f, b)
-        with open(output_path, 'wb') as file:
-            np.savez(file, s=sf, tl=tlf, tu=tuf)
+        # sf = get_features(s_test_loader, f, b)
+        # tlf = get_features(t_labeled_test_loader, f, b)
+        # tuf = get_features(t_unlabeled_test_loader, f, b)
+        # with open(output_path, 'wb') as file:
+        #     np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
