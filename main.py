@@ -511,7 +511,7 @@ def main(args):
         b.train()
         c.train()
 
-        class_soft_labels = np.load(f'labels/class_soft_labels/s{args.source}_t{args.target}.npy')
+        class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}.npy')
         class_soft_labels = torch.from_numpy(np.load(class_soft_labels)).float().cuda()
 
         for i in range(1, args.num_iters+1):
@@ -602,7 +602,7 @@ def main(args):
                 f.train()
                 b.train()
                 c.train()
-                
+
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
