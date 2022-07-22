@@ -511,6 +511,9 @@ def main(args):
         b.train()
         c.train()
 
+        class_soft_labels = np.load(f'labels/class_soft_labels/s{args.source}_t{args.target}.npy')
+        class_soft_labels = torch.from_numpy(np.load(class_soft_labels)).float().cuda()
+
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
             lx, ly = next(l_iter)
@@ -518,7 +521,7 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            
+            soft_sy = class_soft_labels[sy]
             # ux, _ = next(u_iter)
             # ux = ux.float().cuda()
 
@@ -526,8 +529,9 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             l_out = c(b(f(sx)))
-            loss = criterion(l_out, sy)
-            # l_log_softmax_out = F.log_softmax(l_out, dim=1)
+            # loss = criterion(l_out, sy)
+            l_log_softmax_out = F.log_softmax(l_out, dim=1)
+            l_loss = -(soft_sy * l_log_softmax_out).sum(axis=1).mean()
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
             # addi = -(l_log_softmax_out/65).sum(dim=1)
 
@@ -537,7 +541,7 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            loss.backward()
+            l_loss.backward()
             opt.step()
             # for param in c.parameters():
             #     param.requires_grad = False
