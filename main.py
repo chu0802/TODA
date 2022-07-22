@@ -602,10 +602,11 @@ def main(args):
                 f.train()
                 b.train()
                 c.train()
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
                 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.npz')
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
+
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_soft_labels.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
