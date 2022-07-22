@@ -528,7 +528,7 @@ def main(args):
             l_out = c(b(f(sx)))
             loss = criterion(l_out, sy)
             # l_log_softmax_out = F.log_softmax(l_out, dim=1)
-            # l_loss = -(soft_sy * l_log_softmax_out).sum(axis=1).mean()
+            # l_loss = -(soft_sy * l_log_softmax_ut).sum(axis=1).mean()
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
             # addi = -(l_log_softmax_out/65).sum(dim=1)
 
@@ -603,14 +603,14 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
-        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_soft_labels.npz')
-        # output_path.parent.mkdir(exist_ok=True, parents=True)
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s_label_smoothing.npz')
+        output_path.parent.mkdir(exist_ok=True, parents=True)
         
-        # sf = get_features(s_test_loader, f, b)
-        # tlf = get_features(t_labeled_test_loader, f, b)
-        # tuf = get_features(t_unlabeled_test_loader, f, b)
-        # with open(output_path, 'wb') as file:
-        #     np.savez(file, s=sf, tl=tlf, tu=tuf)
+        sf = get_features(s_test_loader, f, b)
+        tlf = get_features(t_labeled_test_loader, f, b)
+        tuf = get_features(t_unlabeled_test_loader, f, b)
+        with open(output_path, 'wb') as file:
+            np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
