@@ -544,7 +544,7 @@ def main(args):
             t_out = c(b(f(lx)))
             t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            loss = s_loss + t_loss
+            loss = s_loss
             loss.backward()
             # opt.step()
             # for param in c.parameters():
