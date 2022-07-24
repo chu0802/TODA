@@ -46,6 +46,7 @@ def arguments_parsing():
     p.add('--bsize', type=int, default=32)
     p.add('--num_iters', type=int, default=3000)
     p.add('--warmup_iters', type=int, default=100)
+    p.add('--alpha', type=float, default=0.5)
     p.add('--lambda_u', type=float, default=0.1)
     p.add('--eval_interval', type=int, default=50)
     p.add('--update_interval', type=int, default=10)
@@ -506,8 +507,8 @@ def main(args):
         b.train()
         c.train()
 
-        class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
-        class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
+        # class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
+        # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
         # full_soft_labels = np.load(f'data/labels/full_soft_labels/s{args.source}_t{args.target}.npy')
         # full_soft_labels = torch.from_numpy(full_soft_labels).float().cuda()
 
@@ -518,24 +519,24 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            soft_sy = class_soft_labels[sy]
-            # ux, _ = next(u_iter)
-            # ux = ux.float().cuda()
+            # soft_sy = class_soft_labels[sy]
+            ux, _ = next(u_iter)
+            ux = ux.float().cuda()
 
             opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            l_out = c(b(f(sx)))
+            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            l_out = c(b(f(inputs)))
             # loss = criterion(l_out, sy)
             l_log_softmax_out = F.log_softmax(l_out, dim=1)
-            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, sy)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, targets)
             
             
             # soft_loss = -(soft_sy * l_log_softmax_out).sum(axis=1)
             # loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * soft_loss).mean()
 
             addi = -(l_log_softmax_out/65).sum(dim=1)
-            loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * addi).mean()
+            loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
 
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
@@ -565,15 +566,15 @@ def main(args):
             # l_loss.backward()
             # opt.step()
             
-            # opt.zero_grad()
+            opt.zero_grad()
             
-            # u_out = c(b(f(ux), reverse=True))
+            u_out = c(b(f(ux), reverse=True))
             
-            # soft_out = F.softmax(u_out, dim=1)
-            # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            soft_out = F.softmax(u_out, dim=1)
+            u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
-            # u_loss.backward()
-            # opt.step()
+            u_loss.backward()
+            opt.step()
 
             # u_out = c(b(f(ux)))
 
