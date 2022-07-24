@@ -528,12 +528,14 @@ def main(args):
             l_out = c(b(f(sx)))
             # loss = criterion(l_out, sy)
             l_log_softmax_out = F.log_softmax(l_out, dim=1)
-            
             l_loss = torch.nn.CrossEntropyLoss(reduction='none')(l_out, sy)
-            soft_loss = -(soft_sy * l_log_softmax_out).sum(axis=1)
-            # addi = -(l_log_softmax_out/65).sum(dim=1)
-            loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * soft_loss).mean()
-            # loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * addi).mean()
+            
+            
+            # soft_loss = -(soft_sy * l_log_softmax_out).sum(axis=1)
+            # loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * soft_loss).mean()
+
+            addi = -(l_log_softmax_out/65).sum(dim=1)
+            loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * addi).mean()
 
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
