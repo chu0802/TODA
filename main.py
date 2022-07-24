@@ -525,11 +525,11 @@ def main(args):
 
             opt.zero_grad()
             
-            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            s_out = c(b(f(inputs)))
+            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            s_out = c(b(f(sx)))
             # loss = criterion(l_out, sy)
             s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            sl_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, targets)
+            sl_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
             
             # soft_loss = -(soft_sy * l_log_softmax_out).sum(axis=1)
             # loss = ((1 - args.lambda_u) * l_loss  + args.lambda_u * soft_loss).mean()
@@ -541,10 +541,10 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            t_out = c(b(f(lx)))
+            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            loss = s_loss
+            loss = s_loss + t_loss
             loss.backward()
             opt.step()
             # for param in c.parameters():
