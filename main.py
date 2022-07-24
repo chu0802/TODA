@@ -541,12 +541,12 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            t_out = c(b(f(lx)))
-            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            # t_out = c(b(f(lx)))
+            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
             loss = s_loss
             loss.backward()
-            # opt.step()
+            opt.step()
             # for param in c.parameters():
             #     param.requires_grad = False
             
