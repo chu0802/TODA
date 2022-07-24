@@ -506,7 +506,7 @@ def main(args):
         b.train()
         c.train()
 
-        class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{args.T}.npy')
+        class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
         class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
         # full_soft_labels = np.load(f'data/labels/full_soft_labels/s{args.source}_t{args.target}.npy')
         # full_soft_labels = torch.from_numpy(full_soft_labels).float().cuda()
