@@ -525,17 +525,17 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            soft_sy = class_soft_labels[sy]
+            # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
 
             opt.zero_grad()
             
-            inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            s_out = c(b(f(inputs)))
+            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            s_out = c(b(f(sx)))
             # loss = criterion(l_out, sy)
             s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, targets)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
