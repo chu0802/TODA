@@ -509,9 +509,6 @@ def main(args):
 
         class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
         class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
-        # full_soft_labels = np.load(f'data/labels/full_soft_labels/s{args.source}_t{args.target}.npy')
-        # full_soft_labels = torch.from_numpy(full_soft_labels).float().cuda()
-
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
             lx, ly = next(l_iter)
