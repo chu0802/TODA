@@ -491,7 +491,7 @@ def main(args):
 
         s_test_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=False))
         s_test_loader = load_img_dloader(args, s_test_dset, train=False)
-        
+
         t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
         t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
 
@@ -513,11 +513,11 @@ def main(args):
         b.train()
         c.train()
 
-        # class_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
-        # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
+        class_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
+        class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
-        global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
-        global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
+        # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
+        # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
             lx, ly = next(l_iter)
@@ -525,7 +525,7 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            # soft_sy = class_soft_labels[sy]
+            soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
 
@@ -539,20 +539,20 @@ def main(args):
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
-            # loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
-            addi = -(s_log_softmax_out/65).sum(dim=1)
-            loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+            # addi = -(s_log_softmax_out/65).sum(dim=1)
+            # loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
 
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            t_out = c(b(f(lx)))
+            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            # loss = (s_loss + t_loss)/2
+            loss = (s_loss + t_loss)/2
             # loss = s_loss
             loss.backward()
             opt.step()
