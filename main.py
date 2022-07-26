@@ -539,11 +539,11 @@ def main(args):
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
-            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
+            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
-            # addi = -(s_log_softmax_out/65).sum(dim=1)
-            # loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+            addi = -(s_log_softmax_out/65).sum(dim=1)
+            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
 
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
