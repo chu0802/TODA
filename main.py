@@ -553,7 +553,7 @@ def main(args):
             # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
             # loss = (s_loss + t_loss)/2
-            loss = s_loss
+            # loss = s_loss
             loss.backward()
             opt.step()
             # for param in c.parameters():
