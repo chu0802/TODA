@@ -90,7 +90,7 @@ class KLLabelSmooth(nn.Module):
         log_probs = F.log_softmax(inputs, dim=1)
         targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).cpu(), 1).cuda()
         targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
-        loss = (targets * (torch.log(targets) - log_probs)).sum(dim=1)
+        loss = (log_probs * (log_probs - torch.log(targets))).sum(dim=1)
         return loss.mean()
 
 class LR_Scheduler(object):
