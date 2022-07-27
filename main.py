@@ -518,8 +518,8 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        criterion = KLLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
-        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        # criterion = KLLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
         # criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
@@ -633,7 +633,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/KLLoss_{args.alpha}.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_smoothing_{args.alpha}.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
