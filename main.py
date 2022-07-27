@@ -81,6 +81,17 @@ class CrossEntropyLabelSmooth(nn.Module):
 
         return loss.mean()
 
+class KLLabelSmooth(nn.Module):
+    def __init__(self, num_classes, epsilon=0.1):
+        super(KLLabelSmooth, self).__init__()
+        self.num_classes = num_classes
+        self.epsilon = epsilon
+    def forward(self, inputs, targets):
+        log_probs = F.log_softmax(inputs, dim=1)
+        targets = torch.zeros(log_probs.size()).scatter_(1, targets.unsqueeze(1).cpu(), 1).cuda()
+        targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
+        loss = (targets * (torch.log(targets) - log_probs)).sum(dim=1)
+        return loss.mean()
 
 class LR_Scheduler(object):
     def __init__(self, optimizer, num_iters, final_lr=None):
@@ -507,7 +518,8 @@ def main(args):
         s_iter = iter(s_train_loader)
         l_iter = iter(t_labeled_train_loader)
         u_iter = iter(t_unlabeled_train_loader)
-        criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        criterion = KLLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
         # criterion = nn.CrossEntropyLoss()
         f.train()
         b.train()
@@ -533,7 +545,7 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             s_out = c(b(f(sx)))
-            loss = criterion(s_out, sy)
+            # loss = criterion(s_out, sy)
             # s_log_softmax_out = F.log_softmax(s_out, dim=1)
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
@@ -621,7 +633,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_smoothing_{args.alpha}.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/KLLoss_{args.alpha}.npz')
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
         sf = get_features(s_test_loader, f, b)
