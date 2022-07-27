@@ -545,7 +545,7 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             s_out = c(b(f(sx)))
-            # loss = criterion(s_out, sy)
+            loss = criterion(s_out, sy)
             # s_log_softmax_out = F.log_softmax(s_out, dim=1)
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
