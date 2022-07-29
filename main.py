@@ -628,7 +628,7 @@ def main(args):
             lr_scheduler.step()
 
             if i % args.eval_interval == 0:
-                s_acc = evaluation(s_test_loader, f, b, c)
+                # s_acc = evaluation(s_test_loader, f, b, c)
                 t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
                 print('\nsrc accuracy: %.2f%%' % (100*s_acc))
                 print('\ntgt accuracy: %.2f%%' % (100*t_acc))

@@ -38,6 +38,6 @@ def get_features(loader, *models):
                 x = m(x)
             shuffle_ty = shuffle_y[y]
             features.append(x.detach().cpu().numpy())
-            labels.append(shuffle_ty.detach().numpy())
+            labels.append(shuffle_ty.detach().cpu().numpy())
     print(labels[0].shape)
     return np.c_[np.vstack(features), np.hstack(labels)]
