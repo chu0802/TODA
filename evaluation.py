@@ -3,18 +3,13 @@ import torch
 import numpy as np
 
 def evaluation(loader, *models):
-    g = np.random.default_rng(2487)
-    arr = np.arange(65)
-    g.shuffle(arr)
-    shuffle_y = torch.from_numpy(arr).long().cuda()
     for m in models:
         m.eval()
     pred, true = [], []
     with torch.no_grad():
         for x, y in loader:
             x, y = x.cuda().float(), y.cuda().long()
-            shuffle_ty = shuffle_y[y]
-            true.append(shuffle_ty)
+            true.append(y)
             for m in models:
                 x = m(x)
             pred.append(x.argmax(dim=1, keepdim=True))
@@ -24,10 +19,6 @@ def evaluation(loader, *models):
     return acc.item()
 
 def get_features(loader, *models):
-    g = np.random.default_rng(2487)
-    arr = np.arange(65)
-    g.shuffle(arr)
-    shuffle_y = torch.from_numpy(arr).long().cuda()
     for m in models:
         m.eval()
     features, labels = [], []
@@ -36,8 +27,7 @@ def get_features(loader, *models):
             x = x.cuda().float()
             for m in models:
                 x = m(x)
-            shuffle_ty = shuffle_y[y]
             features.append(x.detach().cpu().numpy())
-            labels.append(shuffle_ty.detach().cpu().numpy())
+            labels.append(y.detach().numpy())
     print(labels[0].shape)
     return np.c_[np.vstack(features), np.hstack(labels)]

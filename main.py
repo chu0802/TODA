@@ -524,12 +524,6 @@ def main(args):
         f.train()
         b.train()
         c.train()
-
-        g = np.random.default_rng(2487)
-        arr = np.arange(65)
-        g.shuffle(arr)
-        shuffle_y = torch.from_numpy(arr).long().cuda()
-
         # class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
@@ -542,7 +536,6 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            shuffle_sy = shuffle_y[sy]
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
@@ -553,7 +546,7 @@ def main(args):
             s_out = c(b(f(sx)))
             # loss = criterion(s_out, shuffle_sy)
             s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, shuffle_sy)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
