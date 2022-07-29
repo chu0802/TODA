@@ -490,15 +490,15 @@ def main(args):
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
-        # s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
-        # s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
+        s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
+        s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
         root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
         t_train_idx_path = root / f'{t_name}_train_3.txt'
         t_test_idx_path = root / f'{t_name}_test_3.txt'
 
-        s_train_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=True))
-        s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+        # s_train_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=True))
+        # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
         s_test_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=False))
         s_test_loader = load_img_dloader(args, s_test_dset, train=False)
