@@ -524,8 +524,8 @@ def main(args):
         f.train()
         b.train()
         c.train()
-        # class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
-        # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
+        class_soft_labels = np.load(f'data/labels/class_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
+        class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
@@ -536,7 +536,7 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            # soft_sy = class_soft_labels[sy]
+            soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
 
@@ -545,17 +545,17 @@ def main(args):
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             s_out = c(b(f(sx)))
             # loss = (1 - args.alpha) * criterion(s_out, sy)
-            # s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
+            s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
             # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
-            s_loss = criterion(s_out, sy)
+            # s_loss = criterion(s_out, sy)
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
@@ -641,7 +641,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
