@@ -500,8 +500,8 @@ def main(args):
         # s_train_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=True))
         # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
-        s_test_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=False))
-        s_test_loader = load_img_dloader(args, s_test_dset, train=False)
+        # s_test_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=False))
+        # s_test_loader = load_img_dloader(args, s_test_dset, train=False)
 
         t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
         t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
