@@ -497,12 +497,6 @@ def main(args):
         t_train_idx_path = root / f'{t_name}_train_3.txt'
         t_test_idx_path = root / f'{t_name}_test_3.txt'
 
-        # s_train_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=True))
-        # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
-
-        # s_test_dset = ImageList(root, root / f'{args.dataset["domains"][args.source]}_list.txt', transform=TransformNormal(train=False))
-        # s_test_loader = load_img_dloader(args, s_test_dset, train=False)
-
         t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
         t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
 
@@ -544,14 +538,13 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             s_out = c(b(f(sx)))
-            loss = criterion(s_out, sy)
             # loss = (1 - args.alpha) * criterion(s_out, sy)
-            # s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            s_log_softmax_out = F.log_softmax(s_out, dim=1)
             # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
+            soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
             # addi = -(s_log_softmax_out/65).sum(dim=1)
@@ -565,7 +558,7 @@ def main(args):
             # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
             # loss = (s_loss + t_loss)/2
-            # loss = soft_loss.mean()
+            loss = soft_loss.mean()
             loss.backward()
             opt.step()
 
@@ -642,7 +635,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s_wo_cropping.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_soft_labels_4.npz')
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
