@@ -493,7 +493,7 @@ def main(args):
         custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
         s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_dset.targets = custom_hard_labels.tolist()
-        s_train_dloader = load_img_dloader(args, s_train_dset, train=train)
+        s_train_loader = load_img_dloader(args, s_train_dset, train=train)
 
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
