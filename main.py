@@ -518,7 +518,7 @@ def main(args):
         f.train()
         b.train()
         c.train()
-        class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_4.npy')
+        class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_5.npy')
         class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
@@ -635,7 +635,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_soft_labels_4.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_soft_labels_5.npz')
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
