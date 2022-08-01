@@ -493,7 +493,7 @@ def main(args):
         s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
-        print(s_train_dset.y)
+        print(s_train_dset.targets)
         # root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
         # t_train_idx_path = root / f'{t_name}_train_3.txt'
         # t_test_idx_path = root / f'{t_name}_test_3.txt'
