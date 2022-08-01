@@ -493,157 +493,158 @@ def main(args):
         s_train_dset, s_train_loader = load_img_data(args, args.source, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
-        root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
-        t_train_idx_path = root / f'{t_name}_train_3.txt'
-        t_test_idx_path = root / f'{t_name}_test_3.txt'
+        print(s_train_dset.y)
+        # root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
+        # t_train_idx_path = root / f'{t_name}_train_3.txt'
+        # t_test_idx_path = root / f'{t_name}_test_3.txt'
 
-        t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
-        t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+        # t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
+        # t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
 
-        t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
-        t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
+        # t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
+        # t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
 
-        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
-        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
+        # t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
+        # t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
         
-        t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
-        t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
+        # t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
+        # t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
         
-        s_iter = iter(s_train_loader)
-        l_iter = iter(t_labeled_train_loader)
-        u_iter = iter(t_unlabeled_train_loader)
-        # criterion = KLLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
-        # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
-        criterion = nn.CrossEntropyLoss()
-        f.train()
-        b.train()
-        c.train()
-        class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
-        class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
+        # s_iter = iter(s_train_loader)
+        # l_iter = iter(t_labeled_train_loader)
+        # u_iter = iter(t_unlabeled_train_loader)
+        # # criterion = KLLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        # # criterion = CrossEntropyLabelSmooth(args.dataset['num_classes'], epsilon=args.alpha)
+        # criterion = nn.CrossEntropyLoss()
+        # f.train()
+        # b.train()
+        # c.train()
+        # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
+        # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
-        # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
-        # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
-        for i in range(1, args.num_iters+1):
-            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
-            lx, ly = next(l_iter)
-            lx, ly = lx.float().cuda(), ly.long().cuda()
+        # # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}_T{int(args.T)}.npy')
+        # # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
+        # for i in range(1, args.num_iters+1):
+        #     print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
+        #     lx, ly = next(l_iter)
+        #     lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
-            soft_sy = class_soft_labels[sy]
-            ux, _ = next(u_iter)
-            ux = ux.float().cuda()
+        #     sx, sy = next(s_iter)
+        #     sx, sy = sx.float().cuda(), sy.long().cuda()
+        #     soft_sy = class_soft_labels[sy]
+        #     ux, _ = next(u_iter)
+        #     ux = ux.float().cuda()
 
-            opt.zero_grad()
+        #     opt.zero_grad()
             
-            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            s_out = c(b(f(sx)))
-            # loss = (1 - args.alpha) * criterion(s_out, sy)
-            s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
+        #     # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+        #     s_out = c(b(f(sx)))
+        #     # loss = (1 - args.alpha) * criterion(s_out, sy)
+        #     s_log_softmax_out = F.log_softmax(s_out, dim=1)
+        #     # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
-            # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
+        #     # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+        #     soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
+        #     # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
-            # addi = -(s_log_softmax_out/65).sum(dim=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
-            # s_loss = criterion(s_out, sy)
-            # soft_out = F.softmax(l_out, dim=1)
-            # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
-            # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
+        #     # addi = -(s_log_softmax_out/65).sum(dim=1)
+        #     # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+        #     # s_loss = criterion(s_out, sy)
+        #     # soft_out = F.softmax(l_out, dim=1)
+        #     # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+        #     # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+        #     # t_out = c(b(f(lx)))
+        #     # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            # loss = (s_loss + t_loss)/2
-            loss = soft_loss.mean()
-            loss.backward()
-            opt.step()
+        #     # loss = (s_loss + t_loss)/2
+        #     loss = soft_loss.mean()
+        #     loss.backward()
+        #     opt.step()
 
-            # opt.zero_grad()
-            # sf = b(f(sx))
-            # s_log_softmax_out = F.log_softmax(c(sf.detach()), dim=1)
-            # addi = -(s_log_softmax_out/65).sum(dim=1)
-            # loss = args.alpha * addi.mean()
-            # loss.backward()
-            # opt.step()
-            # for param in c.parameters():
-            #     param.requires_grad = False
+        #     # opt.zero_grad()
+        #     # sf = b(f(sx))
+        #     # s_log_softmax_out = F.log_softmax(c(sf.detach()), dim=1)
+        #     # addi = -(s_log_softmax_out/65).sum(dim=1)
+        #     # loss = args.alpha * addi.mean()
+        #     # loss.backward()
+        #     # opt.step()
+        #     # for param in c.parameters():
+        #     #     param.requires_grad = False
             
-            # opt.zero_grad()
+        #     # opt.zero_grad()
             
-            # l_out = c(b(f(sx)))
-            # l_loss = criterion(l_out, sy)
+        #     # l_out = c(b(f(sx)))
+        #     # l_loss = criterion(l_out, sy)
             
-            # l_loss.backward()
-            # opt.step()
+        #     # l_loss.backward()
+        #     # opt.step()
 
-            # for param in c.parameters():
-            #     param.requires_grad = True
-            # opt.zero_grad()
+        #     # for param in c.parameters():
+        #     #     param.requires_grad = True
+        #     # opt.zero_grad()
             
-            # # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
-            # l_out = c(b(f(lx)))
-            # l_loss = criterion(l_out, ly)
+        #     # # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+        #     # l_out = c(b(f(lx)))
+        #     # l_loss = criterion(l_out, ly)
             
-            # l_loss.backward()
-            # opt.step()
+        #     # l_loss.backward()
+        #     # opt.step()
             
-            # opt.zero_grad()
+        #     # opt.zero_grad()
             
-            # u_out = c(b(f(ux), reverse=True))
+        #     # u_out = c(b(f(ux), reverse=True))
             
-            # soft_out = F.softmax(u_out, dim=1)
-            # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+        #     # soft_out = F.softmax(u_out, dim=1)
+        #     # u_loss = args.lambda_u * torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             
-            # u_loss.backward()
-            # opt.step()
+        #     # u_loss.backward()
+        #     # opt.step()
 
-            # u_out = c(b(f(ux)))
+        #     # u_out = c(b(f(ux)))
 
-            # softmax_out = F.softmax(u_out, dim=1)
-            # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
-            # entropy = torch.sum(entropy, dim=1)
+        #     # softmax_out = F.softmax(u_out, dim=1)
+        #     # entropy = -softmax_out * torch.log(softmax_out + 1e-5)
+        #     # entropy = torch.sum(entropy, dim=1)
 
-            # ent_loss = torch.mean(entropy)
+        #     # ent_loss = torch.mean(entropy)
 
-            # msoftmax = softmax_out.mean(dim=0)
-            # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
+        #     # msoftmax = softmax_out.mean(dim=0)
+        #     # gentropy_loss = torch.sum(-msoftmax * torch.log(msoftmax + 1e-5))
 
-            # ent_loss -= gentropy_loss
+        #     # ent_loss -= gentropy_loss
             
-            # loss = args.lambda_u * ent_loss
+        #     # loss = args.lambda_u * ent_loss
 
-            # opt.zero_grad()
-            # loss.backward()
-            # opt.step()
+        #     # opt.zero_grad()
+        #     # loss.backward()
+        #     # opt.step()
             
-            lr_scheduler.step()
+        #     lr_scheduler.step()
 
-            if i % args.eval_interval == 0:
-                # s_acc = evaluation(s_test_loader, f, b, c)
-                t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
-                # print('\nsrc accuracy: %.2f%%' % (100*s_acc))
-                print('\ntgt accuracy: %.2f%%' % (100*t_acc))
-                f.train()
-                b.train()
-                c.train()
+        #     if i % args.eval_interval == 0:
+        #         # s_acc = evaluation(s_test_loader, f, b, c)
+        #         t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
+        #         # print('\nsrc accuracy: %.2f%%' % (100*s_acc))
+        #         print('\ntgt accuracy: %.2f%%' % (100*t_acc))
+        #         f.train()
+        #         b.train()
+        #         c.train()
 
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
+        # # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
+        # # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
-        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_soft_labels_6.npz')
+        # # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
+        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_soft_labels_6.npz')
 
-        output_path.parent.mkdir(exist_ok=True, parents=True)
+        # output_path.parent.mkdir(exist_ok=True, parents=True)
         
-        sf = get_features(s_test_loader, f, b)
-        tlf = get_features(t_labeled_test_loader, f, b)
-        tuf = get_features(t_unlabeled_test_loader, f, b)
-        with open(output_path, 'wb') as file:
-            np.savez(file, s=sf, tl=tlf, tu=tuf)
+        # sf = get_features(s_test_loader, f, b)
+        # tlf = get_features(t_labeled_test_loader, f, b)
+        # tuf = get_features(t_unlabeled_test_loader, f, b)
+        # with open(output_path, 'wb') as file:
+        #     np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
