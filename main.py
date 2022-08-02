@@ -490,10 +490,10 @@ def main(args):
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
-        # custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
-        # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
-        s_train_dset = load_img_dset(args, args.source, train=train)
+        custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
@@ -533,8 +533,11 @@ def main(args):
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.long().cuda()
+
+            sx, sy1, sy2 = next(s_iter)
+            sx, sy1, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.long().cuda()
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
@@ -545,13 +548,16 @@ def main(args):
             s_out = c(b(f(sx)))
             # loss = criterion(s_out, sy)
             # loss = (1 - args.alpha) * criterion(s_out, sy)
-            s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
+            # s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            l_loss1 = criterion(s_out, sy1)
+            l_loss2 = criterion(s_out, sy2)
 
-            soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
+            s_loss = (l_loss1 + l_loss2)/2
+
+            # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
             # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
-            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
             # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
@@ -642,7 +648,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/global_soft_labels_{args.alpha}.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_hard_labels_mix.npz')
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
