@@ -135,6 +135,15 @@ class FeatureSet(Dataset):
     def __getitem__(self, idx):
         return self.x[idx], self.y[idx]
 
+class LabelTransformImageFolder(ImageFolder):
+    def __init__(self, path, transform, targets):
+        super().__init__(path, transform)
+        self.targets = targets
+    def __getitem__(self, idx):
+        path, _ = self.samples[idx]
+        target = self.targets[idx]
+        return self.transform(self.loader(path)), target
+
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
@@ -165,6 +174,8 @@ def load_data(args, path, data_name=None, train=True):
     dset = FeatureSet(path, data_name=data_name)
     dloader = load_dloader(args, dset, train=train)
     return dset, dloader
+
+
 
 def load_img_dset(args, domain, train=True):
     transform = {

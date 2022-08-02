@@ -17,7 +17,7 @@ from torchvision import transforms as T
 from model import grad_reverse, Generator, Classifier, Discriminator, ResBase, BottleNeck, VGGBase, prototypical_classifier
 from util import config_loading, model_handler, set_seed
 from train import kmeans_train, fixbi_train, mix_pseudo_space_train, proto_net_train, s2t_shot_train, s2t_train, train, source_train, train_clf, new_source_train, mixup_train
-from dataset import ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
+from dataset import LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features
 
 from sklearn.svm import LinearSVC
@@ -491,8 +491,10 @@ def main(args):
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
         custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
-        s_train_dset = load_img_dset(args, args.source, train=train)
-        s_train_dset.targets = custom_hard_labels.tolist()
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        transform = TransformNormal(train=True)
+        s_train_dset = LabelTransformImageFolder(path, transform, custom_hard_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=False)
 
         for x, y in s_train_loader:
