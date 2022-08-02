@@ -495,7 +495,8 @@ def main(args):
         s_train_dset.targets = custom_hard_labels.tolist()
         s_train_loader = load_img_dloader(args, s_train_dset, train=False)
 
-        print(s_train_dset.targets)
+        for x, y in s_train_loader:
+            print(y)
         exit()
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
