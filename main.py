@@ -543,18 +543,18 @@ def main(args):
             
             # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
             s_out = c(b(f(sx)))
-            loss = criterion(s_out, sy)
+            # loss = criterion(s_out, sy)
             # loss = (1 - args.alpha) * criterion(s_out, sy)
-            # s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            # l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
+            s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(s_out, sy)
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
             # soft_loss = -(soft_sy * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
-            # addi = -(s_log_softmax_out/65).sum(dim=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+            addi = -(s_log_softmax_out/65).sum(dim=1)
+            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
             # s_loss = criterion(s_out, sy)
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
@@ -565,6 +565,7 @@ def main(args):
 
             # loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
+            loss = s_loss
             loss.backward()
             opt.step()
 
@@ -641,7 +642,7 @@ def main(args):
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_hard_labels_1.npz')
+        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/custom_hard_labels_label_smoothing.npz')
 
         output_path.parent.mkdir(exist_ok=True, parents=True)
         
