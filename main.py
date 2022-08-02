@@ -492,14 +492,10 @@ def main(args):
         
         custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        transform = TransformNormal(train=True)
-        s_train_dset = LabelTransformImageFolder(path, transform, custom_hard_labels)
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=False)
 
-        for x, y in s_train_loader:
-            print(y)
-        exit()
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
         root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
