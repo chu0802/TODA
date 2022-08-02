@@ -494,7 +494,7 @@ def main(args):
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
-        s_train_loader = load_img_dloader(args, s_train_dset, train=False)
+        s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
