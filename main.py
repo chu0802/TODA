@@ -537,7 +537,7 @@ def main(args):
             # sx, sy = sx.float().cuda(), sy.long().cuda()
 
             sx, sy1, sy2 = next(s_iter)
-            sx, sy1, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.long().cuda()
+            sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.long().cuda()
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
