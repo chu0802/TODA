@@ -490,10 +490,10 @@ def main(args):
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
-        custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
-        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
-        # s_train_dset = load_img_dset(args, args.source, train=train)
+        # custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
+        # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
+        s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
