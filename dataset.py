@@ -142,7 +142,7 @@ class LabelTransformImageFolder(ImageFolder):
     def __getitem__(self, idx):
         path, org_target = self.samples[idx]
         target = self.targets[idx]
-        return self.transform(self.loader(path)), org_target, target
+        return self.transform(self.loader(path)), target
 
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
