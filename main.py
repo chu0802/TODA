@@ -531,11 +531,11 @@ def main(args):
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.float().cuda()
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.float().cuda()
 
-            # sx, sy1, sy2 = next(s_iter)
-            # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.long().cuda()
+            sx, sy1, sy2 = next(s_iter)
+            sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.long().cuda()
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
@@ -547,17 +547,17 @@ def main(args):
             # loss = criterion(s_out, sy)
             # loss = (1 - args.alpha) * criterion(s_out, sy)
             s_log_softmax_out = F.log_softmax(s_out, dim=1)
-            # l_loss = nn.CrossEntropyLoss(reduction='none')(s_out, sy)
+            l_loss = nn.CrossEntropyLoss(reduction='none')(s_out, sy1)
             # l_loss2 = criterion(s_out, sy2)
 
             # s_loss = (l_loss1 + l_loss2)/2
 
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
-            soft_loss = -(sy * s_log_softmax_out).sum(axis=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
 
-            addi = -(s_log_softmax_out/65).sum(dim=1)
+            # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
             # s_loss = criterion(s_out, sy)
             # soft_out = F.softmax(l_out, dim=1)
@@ -569,7 +569,7 @@ def main(args):
 
             # loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
-            loss = soft_loss.mean()
+            loss = s_loss
             loss.backward()
             opt.step()
 
@@ -642,19 +642,19 @@ def main(args):
                 b.train()
                 c.train()
 
-        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_{args.seed}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
-        output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.npz')
+        # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.npz')
 
-        output_path.parent.mkdir(exist_ok=True, parents=True)
+        # output_path.parent.mkdir(exist_ok=True, parents=True)
         
-        sf = get_features(s_test_loader, f, b)
-        tlf = get_features(t_labeled_test_loader, f, b)
-        tuf = get_features(t_unlabeled_test_loader, f, b)
-        with open(output_path, 'wb') as file:
-            np.savez(file, s=sf, tl=tlf, tu=tuf)
+        # sf = get_features(s_test_loader, f, b)
+        # tlf = get_features(t_labeled_test_loader, f, b)
+        # tuf = get_features(t_unlabeled_test_loader, f, b)
+        # with open(output_path, 'wb') as file:
+        #     np.savez(file, s=sf, tl=tlf, tu=tuf)
 
 if __name__ == '__main__':
     args = arguments_parsing()
