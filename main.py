@@ -533,7 +533,7 @@ def main(args):
             
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.float().cuda()
-            print(sy)
+            print(sy.sum(dir=1))
             exit()
             # sx, sy1, sy2 = next(s_iter)
             # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.long().cuda()
