@@ -47,6 +47,7 @@ def arguments_parsing():
     p.add('--num_iters', type=int, default=3000)
     p.add('--warmup_iters', type=int, default=100)
     p.add('--alpha', type=float, default=0.5)
+    p.add('--beta', type=float, default=0.8)
     p.add('--dim', type=int, default=1)
     p.add('--lambda_u', type=float, default=0.1)
     p.add('--eval_interval', type=int, default=50)
@@ -555,10 +556,10 @@ def main(args):
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             
             soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
-            s_loss = ((1 - args.alpha) * l_loss  + args.alpha * soft_loss).mean()
+            s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss)
 
-            # addi = -(s_log_softmax_out/65).sum(dim=1)
-            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+            addi = -(s_log_softmax_out/65).sum(dim=1)
+            s_loss = ((1 - args.alpha) * s_loss  + args.alpha * addi).mean()
             # s_loss = criterion(s_out, sy)
             # soft_out = F.softmax(l_out, dim=1)
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
