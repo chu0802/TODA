@@ -12,6 +12,7 @@ eval_interval: 100
 warmup_iters: 2000
 lambda_u: 0.1
 alpha: 0.5
+dim: 2
 T: 1
 
 # optimizer
