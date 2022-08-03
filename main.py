@@ -489,7 +489,8 @@ def main(args):
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
-        label_correction_soft_labels = np.load(f'data/labels/label_correction_soft_labels/s{args.source}_t{args.target}_1.npy')
+        dim = 100
+        label_correction_soft_labels = np.load(f'data/labels/label_correction_soft_labels/s{args.source}_t{args.target}_{dim}.npy')
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
@@ -642,7 +643,7 @@ def main(args):
                 b.train()
                 c.train()
 
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.alpha}_{args.num_iters}_{dim}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
