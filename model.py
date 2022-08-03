@@ -148,8 +148,7 @@ class Classifier(nn.Module):
         self.fc.apply(init_weights)
     def forward(self, x):
         return self.fc(x)
-
-
+    
 # -
 
 class MME_Classifier(nn.Module):

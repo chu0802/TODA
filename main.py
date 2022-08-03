@@ -139,7 +139,6 @@ def get_img_dloaders(args):
     
     return src_train_dloader, src_test_dloader, tgt_train_dloader, tgt_test_dloader
 
-# +
 def save(file_name, **models):
     path = Path('./model') / file_name
     path.parent.mkdir(exist_ok=True, parents=True)
@@ -475,7 +474,7 @@ def main(args):
         f = ResBase(backbone='resnet34', pretrained=True).cuda()
         b = BottleNeck(f.last_dim, bottleneck_dim).cuda()
         c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
-        
+
         # load(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/t.pt', f=f, b=b, c=c)
 
         # for param in c.parameters():
@@ -490,10 +489,10 @@ def main(args):
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
         
-        # custom_hard_labels = np.load(f'data/labels/custom_hard_labels/s{args.source}_t{args.target}_1.npy')
-        # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), custom_hard_labels)
-        s_train_dset = load_img_dset(args, args.source, train=train)
+        label_correction_soft_labels = np.load(f'data/labels/label_correction_soft_labels/s{args.source}_t{args.target}_1.npy')
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
 
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
@@ -526,16 +525,17 @@ def main(args):
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
 
-        global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
-        global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
+        # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
+        # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
             print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
             sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
-
+            sx, sy = sx.float().cuda(), sy.float().cuda()
+            print(sy)
+            exit()
             # sx, sy1, sy2 = next(s_iter)
             # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.long().cuda()
             # soft_sy = class_soft_labels[sy]
