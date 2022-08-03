@@ -643,7 +643,7 @@ def main(args):
                 b.train()
                 c.train()
 
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.alpha}_{args.num_iters}_{args.dim}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.alpha}_{args.beta}_{args.num_iters}_{args.dim}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
