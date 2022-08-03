@@ -47,6 +47,7 @@ def arguments_parsing():
     p.add('--num_iters', type=int, default=3000)
     p.add('--warmup_iters', type=int, default=100)
     p.add('--alpha', type=float, default=0.5)
+    p.add('--dim', type=int, default=1)
     p.add('--lambda_u', type=float, default=0.1)
     p.add('--eval_interval', type=int, default=50)
     p.add('--update_interval', type=int, default=10)
