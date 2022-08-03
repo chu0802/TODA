@@ -559,7 +559,7 @@ def main(args):
             s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss)
 
             soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
-            s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss)
+            s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
 
             # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * addi).mean()
