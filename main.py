@@ -553,8 +553,6 @@ def main(args):
 
             # s_loss = (l_loss1 + l_loss2)/2
 
-            
-            
             soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
             s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
 
@@ -568,12 +566,12 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            t_out = c(b(f(lx)))
+            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            # loss = (s_loss + t_loss)/2
+            loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
-            loss = s_loss
+            # loss = s_loss
             loss.backward()
             opt.step()
 
@@ -646,7 +644,7 @@ def main(args):
                 b.train()
                 c.train()
 
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_{args.beta}_{args.num_iters}_{args.dim}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/S+T_label_correction_{args.beta}_{args.num_iters}_{args.dim}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
