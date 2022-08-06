@@ -640,6 +640,8 @@ def main(args):
 
             sx, sy1, sy2 = next(s_iter)
             sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
+            print(st1, sy2[0])
+            exit()
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
