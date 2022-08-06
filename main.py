@@ -593,7 +593,7 @@ def main(args):
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
-        label_correction_soft_labels = np.load(f'data/labels/S+T/label_correction_soft_labels/s{args.source}_t{args.target}_{args.dim}_{args.T}.npy')
+        label_correction_soft_labels = np.load(f'data/labels/label_correction_soft_labels/s{args.source}_t{args.target}_{args.dim}.npy')
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
@@ -669,12 +669,12 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            t_out = c(b(f(lx)))
-            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            # t_out = c(b(f(lx)))
+            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            loss = (s_loss + t_loss)/2
+            # loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
-            # loss = s_loss
+            loss = s_loss
             loss.backward()
             opt.step()
 
@@ -747,7 +747,7 @@ def main(args):
                 b.train()
                 c.train()
 
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/S+T/S+T_label_correction_{args.beta}_{args.num_iters}_{args.dim}_{args.T}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_{args.beta}_{args.num_iters}_{args.dim}.pt', f=f, b=b, c=c)
         # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
