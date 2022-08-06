@@ -631,7 +631,7 @@ def main(args):
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
-            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
+            
             lx, ly = next(l_iter)
             lx, ly = lx.float().cuda(), ly.long().cuda()
             
@@ -640,8 +640,6 @@ def main(args):
 
             sx, sy1, sy2 = next(s_iter)
             sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
-            print(sy1, sy2[0])
-            exit()
             # soft_sy = class_soft_labels[sy]
             ux, _ = next(u_iter)
             ux = ux.float().cuda()
@@ -660,10 +658,9 @@ def main(args):
 
             soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
             s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
-
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
-
+            print('iteration: %03d/%03d, lr: %.4f, loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item()), end='\r')   
             # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
             # s_loss = criterion(s_out, sy)
