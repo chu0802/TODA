@@ -14,7 +14,7 @@ from torch.utils.data import Subset
 from torchvision import transforms as T
 
 
-from model import grad_reverse, Generator, Classifier, Discriminator, ResBase, BottleNeck, VGGBase, prototypical_classifier
+from model import NonLinearExtractor, ResExtractor, grad_reverse, Generator, Classifier, Discriminator, ResBase, BottleNeck, VGGBase, prototypical_classifier
 from util import config_loading, model_handler, set_seed
 from train import kmeans_train, fixbi_train, mix_pseudo_space_train, proto_net_train, s2t_shot_train, s2t_train, train, source_train, train_clf, new_source_train, mixup_train
 from dataset import LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
@@ -471,6 +471,109 @@ def main(args):
         output_path.parent.mkdir(exist_ok=True, parents=True)
         with open(output_path, 'wb') as f:
             np.savez(f, s=sf, t=tf)
+    if args.mode == 'lc':
+        bottleneck_dim = 512
+        pf = ResExtractor('resnet34', bottleneck_dim).cuda()
+        b = NonLinearExtractor(bottleneck_dim, bottleneck_dim).cuda()
+        c = Classifier(bottleneck_dim, args.dataset['num_classes']).cuda()
+
+        params = [
+            {'params': b.parameters(), 'base_lr': args.lr, 'lr': args.lr},
+            {'params': c.parameters(), 'base_lr': args.lr, 'lr': args.lr}
+        ]
+
+        opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+        lr_scheduler = LR_Scheduler(opt, args.num_iters)
+
+        label_correction_soft_labels = np.load(f'data/labels/S+T/label_correction_soft_labels/s{args.source}_t{args.target}_{args.dim}_{args.T}.npy')
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
+        s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+        s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
+        
+        root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
+        t_train_idx_path = root / f'{t_name}_train_3.txt'
+        t_test_idx_path = root / f'{t_name}_test_3.txt'
+
+        t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
+        t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+
+        t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
+        t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
+
+        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
+        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
+        
+        t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
+        t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
+        
+        s_iter = iter(s_train_loader)
+        l_iter = iter(t_labeled_train_loader)
+        u_iter = iter(t_unlabeled_train_loader)
+
+        criterion = nn.CrossEntropyLoss()
+        b.train()
+        c.train()
+
+        for i in range(1, args.num_iters+1):
+            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')   
+            lx, ly = next(l_iter)
+            lx, ly = lx.float().cuda(), ly.long().cuda()
+            
+            # sx, sy = next(s_iter)
+            # sx, sy = sx.float().cuda(), sy.long().cuda()
+
+            sx, sy1, sy2 = next(s_iter)
+            sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
+            # soft_sy = class_soft_labels[sy]
+            ux, _ = next(u_iter)
+            ux = ux.float().cuda()
+
+            opt.zero_grad()
+            
+            # inputs, targets = torch.cat((sx, lx)), torch.cat((sy, ly))
+            s_out = c(b(pf(sx)))
+            # loss = criterion(s_out, sy)
+            # loss = (1 - args.alpha) * criterion(s_out, sy)
+            s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            l_loss = nn.CrossEntropyLoss(reduction='none')(s_out, sy1)
+            # l_loss2 = criterion(s_out, sy2)
+
+            # s_loss = (l_loss1 + l_loss2)/2
+
+            soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
+
+            # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
+            # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
+
+            # addi = -(s_log_softmax_out/65).sum(dim=1)
+            # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
+            # s_loss = criterion(s_out, sy)
+            # soft_out = F.softmax(l_out, dim=1)
+            # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
+            # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
+            
+            # t_out = c(b(f(lx)))
+            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+
+            # loss = (s_loss + t_loss)/2
+            # loss = soft_loss.mean()
+            loss = s_loss
+            loss.backward()
+            opt.step()
+            
+            lr_scheduler.step()
+
+            if i % args.eval_interval == 0:
+                t_acc = evaluation(t_unlabeled_test_loader, pf, b, c)
+                print('\ntgt accuracy: %.2f%%' % (100*t_acc))
+                b.train()
+                c.train()
+
+        save(f'{args.dataset["name"]}/{args.mode}/res34/s{args.source}_t{args.target}_{args.seed}/S+T/S+T_label_correction_{args.beta}_{args.num_iters}_{args.dim}_{args.T}.pt', pf=pf, b=b, c=c)
+    
     if args.mode == '3shot':
         bottleneck_dim = 512
         f = ResBase(backbone='resnet34', pretrained=True).cuda()

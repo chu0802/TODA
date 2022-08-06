@@ -127,6 +127,28 @@ class prototypical_classifier(nn.Module):
 
 # +
 
+class ResExtractor(nn.Module):
+    def __init__(self, backbone='resnet34', bottleneck_dim=512):
+        super(ResExtractor, self).__init__()
+        self.f = ResBase(backbone=backbone, pretrained=True)
+        self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
+    def forward(self, x):
+        return self.b(self.f(x)).detach()
+
+class NonLinearExtractor(nn.Module):
+    def __init__(self, in_features, bottleneck_dim):
+        super(NonLinearExtractor, self).__init__()
+        self.bottleneck = nn.Sequential(
+            nn.Linear(in_features, bottleneck_dim, bias=True),
+            nn.BatchNorm1d(bottleneck_dim),
+            nn.ReLU(inplace=True),
+            nn.Linear(bottleneck_dim, bottleneck_dim, bias=True),
+            nn.BatchNorm1d(bottleneck_dim),
+        )
+        self.bottleneck.apply(init_weights)
+        self.bn = nn.BatchNorm1d(bottleneck_dim, affine=True)
+    def forward(self, x):
+        return self.bn(self.bottleneck(x))
 
 class BottleNeck(nn.Module):
     def __init__(self, in_features, bottleneck_dim):
