@@ -1,6 +1,10 @@
 __pycache__
 model
 .ipynb_checkpoints
+labels
 OfficeHome
 Office31
 res
+script_generator.py
+*.sh
+*.ipynb
