@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Subset
 from torchvision import transforms as T
-
+from torch.utils.tensorboard import SummaryWriter
 
 from model import NonLinearExtractor, ResExtractor, grad_reverse, Generator, Classifier, Discriminator, ResBase, BottleNeck, VGGBase, prototypical_classifier
 from util import config_loading, model_handler, set_seed
@@ -627,7 +627,7 @@ def main(args):
         c.train()
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
-
+        writer = SummaryWriter()
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
@@ -738,10 +738,15 @@ def main(args):
             lr_scheduler.step()
 
             if i % args.eval_interval == 0:
+                
                 # s_acc = evaluation(s_test_loader, f, b, c)
                 t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
                 # print('\nsrc accuracy: %.2f%%' % (100*s_acc))
-                print('\ntgt accuracy: %.2f%%' % (100*t_acc))
+                # print('\ntgt accuracy: %.2f%%' % (100*t_acc))
+                writer.add_scalar('S_Loss', s_loss.item(), i)
+                writer.add_scalar('T_Loss', t_loss.item(), i)
+                writer.add_scalar('LR', lr_scheduler.get_lr(), i)
+                writer.add_scalar('Acc.', t_acc, i)
                 f.train()
                 b.train()
                 c.train()
