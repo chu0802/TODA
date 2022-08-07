@@ -627,7 +627,7 @@ def main(args):
         c.train()
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
-        writer = SummaryWriter()
+        writer = SummaryWriter(f'log/{args.num_iters}_{args.beta}_{args.T}')
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
