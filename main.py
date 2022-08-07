@@ -660,7 +660,7 @@ def main(args):
             s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
-            print('iteration: %03d/%03d, lr: %.4f, loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item()), end='\r')   
+               
             # addi = -(s_log_softmax_out/65).sum(dim=1)
             # s_loss = ((1 - args.alpha) * l_loss  + args.alpha * addi).mean()
             # s_loss = criterion(s_out, sy)
@@ -676,8 +676,8 @@ def main(args):
             # loss = s_loss
             loss.backward()
             opt.step()
-
-            # opt.zero_grad()
+            print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f, t_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item(), t_loss.item()), end='\r')
+            # opt.zero_grad()q
             # sf = b(f(sx))
             # s_log_softmax_out = F.log_softmax(c(sf.detach()), dim=1)
             # addi = -(s_log_softmax_out/65).sum(dim=1)
