@@ -593,7 +593,7 @@ def main(args):
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
-        label_correction_soft_labels = np.load(f'data/labels/avg_distance/3shot/pseudo_center/s{args.source}_t{args.target}_{args.T}.npy')
+        label_correction_soft_labels = np.load(f'data/labels/avg_distance/s{args.source}_t{args.target}_{args.T}.npy')
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
@@ -627,7 +627,7 @@ def main(args):
         c.train()
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
-        writer = SummaryWriter(f'log/source_only/lc_pc/data/test_{args.num_iters}_beta{args.beta}'.replace('.',''))
+        writer = SummaryWriter(f'log/source_only/ideal/data/{args.num_iters}_beta{args.beta}_T{args.T}'.replace('.',''))
         # writer = SummaryWriter(f'log/S+T/source_only/data/{args.num_iters}_beta{args.beta}')
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
@@ -758,7 +758,7 @@ def main(args):
                 c.train()
 
         # save(f'{args.dataset["name"]}/3shot/res34/S+T/s{args.source}_t{args.target}_{args.seed}/avg_distance/3shot/pseudo_center/label_correction_{args.beta}_{args.num_iters}_{args.T}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/source_only/test_{args.num_iters}_{args.beta}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/source_only/ideal/{args.num_iters}_{args.beta}_{args.T}.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.npz')
@@ -782,15 +782,3 @@ if __name__ == '__main__':
         args.hash_table_name
     )
     main(args)
-
-sx, sy, f, c, num_epoches, alpha, u_loss = 0, 0, sum(), sum(), 0, 0, 0
-
-
-
-for epoch in range(num_epoches):
-	# Calculate cross entropy loss for labeled data (c: classifier, f: feature extractor)
-    s_out = c(f(sx))
-    s_loss = nn.CrossEntropyLoss(s_out, sy)
-
-    # u_loss = ... (Applying their new idea for unlabeled data)
-    loss = s_loss + alpha * u_loss
