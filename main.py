@@ -593,10 +593,10 @@ def main(args):
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
-        # label_correction_soft_labels = np.load(f'data/labels/avg_distance/3shot/pseudo_center/s{args.source}_t{args.target}_{args.T}.npy')
-        # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
-        s_train_dset = load_img_dset(args, args.source, train=train)
+        label_correction_soft_labels = np.load(f'data/labels/avg_distance/3shot/pseudo_center/s{args.source}_t{args.target}_{args.T}.npy')
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
@@ -656,9 +656,9 @@ def main(args):
             # l_loss2 = criterion(s_out, sy2)
 
             # s_loss = (l_loss1 + l_loss2)/2
-            s_loss = l_loss
-            # soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
-            # s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
+            # s_loss = l_loss
+            soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
                
@@ -754,7 +754,7 @@ def main(args):
                 c.train()
 
         # save(f'{args.dataset["name"]}/3shot/res34/S+T/s{args.source}_t{args.target}_{args.seed}/avg_distance/3shot/pseudo_center/label_correction_{args.beta}_{args.num_iters}_{args.T}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/s_{args.num_iters}_{args.beta}.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.npz')
