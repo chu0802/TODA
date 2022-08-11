@@ -593,7 +593,7 @@ def main(args):
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
-        label_correction_soft_labels = np.load(f'data/labels/avg_distance/s{args.source}_t{args.target}_{args.T}.npy')
+        label_correction_soft_labels = np.load(f'data/labels/avg_distance/ideal/s{args.source}_t{args.target}_{args.T}.npy')
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
         # s_train_dset = load_img_dset(args, args.source, train=train)
