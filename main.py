@@ -627,7 +627,7 @@ def main(args):
         c.train()
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
-        writer = SummaryWriter(f'log/source_only/ideal/data/{args.num_iters}_beta{args.beta}_T{args.T}'.replace('.',''))
+        writer = SummaryWriter(f'log/S+T/ideal/data/{args.num_iters}_beta{args.beta}_T{args.T}'.replace('.',''))
         # writer = SummaryWriter(f'log/S+T/source_only/data/{args.num_iters}_beta{args.beta}')
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
@@ -673,15 +673,15 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            t_out = c(b(f(lx)))
+            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            # loss = (s_loss + t_loss)/2
+            loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
-            loss = s_loss
+            # loss = s_loss
             loss.backward()
             opt.step()
-            print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item()), end='\r')
+            print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f, t_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item(), t_loss.item()), end='\r')
             # print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f, t_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item(), t_loss.item()), end='\r')
             # opt.zero_grad()q
             # sf = b(f(sx))
@@ -745,20 +745,21 @@ def main(args):
 
             if i % args.eval_interval == 0:
                 
-                # s_acc = evaluation(s_test_loader, f, b, c)
+                s_acc = evaluation(s_test_loader, f, b, c)
                 t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
                 # print('\nsrc accuracy: %.2f%%' % (100*s_acc))
                 # print('\ntgt accuracy: %.2f%%' % (100*t_acc))
                 writer.add_scalar('Loss/src', s_loss.item(), i)
-                # writer.add_scalar('Loss/tgt', t_loss.item(), i)
-                writer.add_scalar('Info/LR', lr_scheduler.get_lr(), i)
-                writer.add_scalar('Info/Acc.', t_acc, i)
+                writer.add_scalar('Loss/tgt', t_loss.item(), i)
+                # writer.add_scalar('Info/LR', lr_scheduler.get_lr(), i)
+                writer.add_scalar('Acc/s_acc.', s_acc, i)
+                writer.add_scalar('Acc/t_acc.', t_acc, i)
                 f.train()
                 b.train()
                 c.train()
 
         # save(f'{args.dataset["name"]}/3shot/res34/S+T/s{args.source}_t{args.target}_{args.seed}/avg_distance/3shot/pseudo_center/label_correction_{args.beta}_{args.num_iters}_{args.T}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/source_only/ideal/{args.num_iters}_{args.beta}_{args.T}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/S+T/ideal/{args.num_iters}_{args.beta}_{args.T}.pt', f=f, b=b, c=c)
 
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/class_wise_label_smoothing_{args.alpha}.npz')
         # output_path = Path(f'./data/{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/label_correction_soft_labels_{args.num_iters}.npz')
