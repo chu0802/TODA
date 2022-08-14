@@ -1,5 +1,8 @@
 __pycache__
 model
+feature
+log
+.mdh
 .ipynb_checkpoints
 labels
 OfficeHome
