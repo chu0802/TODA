@@ -127,6 +127,36 @@ class prototypical_classifier(nn.Module):
 
 # +
 
+class ResModel(nn.Module):
+    def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65):
+        super(ResExtractor, self).__init__()
+        self.f = ResBase(backbone=backbone, pretrained=True)
+        self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
+        self.c = Classifier(bottleneck_dim, output_dim)
+        self.criterion = nn.CrossEntropyLoss()
+    def get_params(self, lr):
+        return [
+            {'params': self.f.parameters(), 'base_lr': lr*0.1, 'lr': lr*0.1},
+            {'params': self.b.parameters(), 'base_lr': lr, 'lr': lr},
+            {'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}
+        ]
+    def get_features(self, x):
+        return self.b(self.f(x))
+
+    def forward(self, x):
+        return self.c(self.b(self.f(x)))
+
+    def base_loss(self, x, y):
+        out = self.forward(x)
+        return self.criterion(out, y)
+
+    def lc_loss(self, x, y1, y2, alpha):
+        out = self.forward(x)
+        log_softmax_out = F.log_softmax(out, dim=1)
+        l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
+        soft_loss = -(y2 * log_softmax_out).sum(axis=1)
+        return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+
 class ResExtractor(nn.Module):
     def __init__(self, backbone='resnet34', bottleneck_dim=512):
         super(ResExtractor, self).__init__()
