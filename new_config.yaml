@@ -1,0 +1,34 @@
+source: 0
+target: 1
+
+# training settings
+seed: 2020
+bsize: 32
+num_iters: 1000
+eval_interval: 100
+
+alpha: 0.5
+T: 1
+
+# optimizer
+lr: 0.1
+
+# configurations
+dataset_cfg:
+    OfficeHome:
+        name: OfficeHome
+        path: /work/chu980802/data/OfficeHome
+        num_classes: 65
+        domains:
+                - Art
+                - Clipart
+                - Product
+                - RealWorld
+    Office31:
+        name: Office31
+        path: /work/chu980802/data/Office31
+        num_classes: 31
+        domains:
+                - amazon
+                - dslr
+                - webcam

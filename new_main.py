@@ -18,7 +18,7 @@ from mdh import ModelHandler
 
 def arguments_parsing():
     p = configargparse.ArgumentParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
-    p.add('--config', is_config_file=True, default='./config.yaml')
+    p.add('--config', is_config_file=True, default='./new_config.yaml')
     p.add('--device', type=str, default='0')
     p.add('--mode', type=str, default='train')
     # choosing strategies, and models, and datasets
