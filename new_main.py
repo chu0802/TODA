@@ -41,6 +41,7 @@ def arguments_parsing():
     # optimizer
     p.add('--lr', type=float, default=1e-2)
     p.add('--T', type=float, default=0.05)
+    p.add('--note', type=str, default='')
     return p.parse_args()
 
 class LR_Scheduler(object):
@@ -124,7 +125,6 @@ def main(args):
     s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
     s_train_loader = load_img_dloader(args, s_train_dset, train=True)
     s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
-
     
     if args.mode == 'uda':
         t_unlabeled_train_dset, t_unlabeled_train_loader = load_img_data(args, args.target, train=True)
@@ -153,7 +153,7 @@ def main(args):
     model.train()
 
     writer = SummaryWriter(args.mdh.getLogPath())
-
+    writer.add_text('Note', args.note, 0)
     for i in range(1, args.num_iters+1):
         sx, sy1, sy2 = next(s_iter)
         sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
