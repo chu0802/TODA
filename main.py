@@ -593,10 +593,10 @@ def main(args):
         
         opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
         lr_scheduler = LR_Scheduler(opt, args.num_iters)
-        # label_correction_soft_labels = np.load(f'data/labels/avg_distance/ideal/s{args.source}_t{args.target}_{args.T}.npy')
-        # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-        # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
-        s_train_dset = load_img_dset(args, args.source, train=train)
+        label_correction_soft_labels = np.load(f'data/labels/OfficeHome/3shot/res34/S+T/s0_t1_2020/avg_distance/3shot/pseudo_center/label_correction_0.8_5000_0.2/s{args.source}_t{args.target}_{args.T}.npy')
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
+        # s_train_dset = load_img_dset(args, args.source, train=train)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
         s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
         
@@ -628,7 +628,7 @@ def main(args):
         # class_soft_labels = np.load(f'data/labels/custom_soft_labels/s{args.source}_t{args.target}_6.npy')
         # class_soft_labels = torch.from_numpy(class_soft_labels).float().cuda()
         # writer = SummaryWriter(f'log/S+T/ideal/data/{args.num_iters}_beta{args.beta}_T{args.T}'.replace('.',''))
-        # writer = SummaryWriter(f'log/S+T/source_only/data/{args.num_iters}_beta{args.beta}')
+        writer = SummaryWriter(f'log/S+T/lc_pc_iter1/data/{args.num_iters}_beta{args.beta}_T{args.T}')
         # global_soft_labels = np.load(f'data/labels/global_soft_labels/s{args.source}_t{args.target}.npy')
         # global_soft_labels = torch.from_numpy(global_soft_labels).float().cuda()
         for i in range(1, args.num_iters+1):
@@ -651,14 +651,14 @@ def main(args):
             s_out = c(b(f(sx)))
             # loss = criterion(s_out, sy)
             # loss = (1 - args.alpha) * criterion(s_out, sy)
-            # s_log_softmax_out = F.log_softmax(s_out, dim=1)
+            s_log_softmax_out = F.log_softmax(s_out, dim=1)
             l_loss = nn.CrossEntropyLoss(reduction='none')(s_out, sy1)
             # l_loss2 = criterion(s_out, sy2)
 
             # s_loss = (l_loss1 + l_loss2)/2
-            s_loss = l_loss
-            # soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
-            # s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
+            # s_loss = l_loss
+            soft_loss = -(sy2 * s_log_softmax_out).sum(axis=1)
+            s_loss = ((1 - args.beta) * l_loss  + args.beta * soft_loss).mean()
             # soft_loss = -(global_soft_labels * s_log_softmax_out).sum(axis=1)
             # s_loss = ((1 - args.alpha) * s_loss  + args.alpha * soft_loss).mean()
                
@@ -669,16 +669,16 @@ def main(args):
             # h_loss = - torch.mean(torch.sum(soft_out * (torch.log(soft_out + 1e-5)), dim=1))
             # loss = (1 - args.lambda_u) * l_loss + args.lambda_u * h_loss
             
-            # t_out = c(b(f(lx)))
-            # t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
+            t_out = c(b(f(lx)))
+            t_loss = torch.nn.CrossEntropyLoss()(t_out, ly)
 
-            # loss = (s_loss + t_loss)/2
+            loss = (s_loss + t_loss)/2
             # loss = soft_loss.mean()
-            loss = s_loss
+            # loss = s_loss
             loss.backward()
             opt.step()
-            print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item()), end='\r')
-            # print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f, t_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item(), t_loss.item()), end='\r')
+            # print('iteration: %03d/%03d, lr: %.4f, s_loss: %.4f' % (i, args.num_iters, lr_scheduler.get_lr(), s_loss.item()), end='\r')
+            print('iteration: %03d/%03d, lr: %.4f' % (i, args.num_iters, lr_scheduler.get_lr()), end='\r')
             # opt.zero_grad()q
             # sf = b(f(sx))
             # s_log_softmax_out = F.log_softmax(c(sf.detach()), dim=1)
@@ -741,21 +741,22 @@ def main(args):
 
             if i % args.eval_interval == 0:
                 
-                # s_acc = evaluation(s_test_loader, f, b, c)
+                s_acc = evaluation(s_test_loader, f, b, c)
                 t_acc = evaluation(t_unlabeled_test_loader, f, b, c)
                 # print('\nsrc accuracy: %.2f%%' % (100*s_acc))
-                print('\ntgt accuracy: %.2f%%' % (100*t_acc))
-                # writer.add_scalar('Loss/src', s_loss.item(), i)
-                # writer.add_scalar('Loss/tgt', t_loss.item(), i)
+                # print('\ntgt accuracy: %.2f%%' % (100*t_acc))
+                writer.add_scalar('Loss/src', s_loss.item(), i)
+                writer.add_scalar('Loss/tgt', t_loss.item(), i)
                 # writer.add_scalar('Info/LR', lr_scheduler.get_lr(), i)
-                # writer.add_scalar('Acc/s_acc.', s_acc, i)
-                # writer.add_scalar('Acc/t_acc.', t_acc, i)
+                writer.add_scalar('Acc/s_acc.', s_acc, i)
+                writer.add_scalar('Acc/t_acc.', t_acc, i)
                 f.train()
                 b.train()
                 c.train()
 
         # save(f'{args.dataset["name"]}/3shot/res34/S+T/s{args.source}_t{args.target}_{args.seed}/avg_distance/3shot/pseudo_center/label_correction_{args.beta}_{args.num_iters}_{args.T}.pt', f=f, b=b, c=c)
-        save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/source_only/{args.num_iters}_{args.beta}_{args.T}.pt', f=f, b=b, c=c)
+        # save(f'{args.dataset["name"]}/3shot/res34/s{args.source}_t{args.target}_{args.seed}/source_only/{args.num_iters}_{args.beta}_{args.T}.pt', f=f, b=b, c=c)
+        save(f'{args.dataset["name"]}/3shot/res34/S+T/s{args.source}_t{args.target}_{args.seed}/avg_distance/3shot/pseudo_center/iter1/{args.beta}_{args.num_iters}_{args.T}.pt', f=f, b=b, c=c)
 if __name__ == '__main__':
     args = arguments_parsing()
     
