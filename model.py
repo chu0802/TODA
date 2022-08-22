@@ -129,7 +129,7 @@ class prototypical_classifier(nn.Module):
 
 class ResModel(nn.Module):
     def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65):
-        super(ResExtractor, self).__init__()
+        super(ResModel, self).__init__()
         self.f = ResBase(backbone=backbone, pretrained=True)
         self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
         self.c = Classifier(bottleneck_dim, output_dim)
