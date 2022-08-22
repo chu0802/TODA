@@ -80,7 +80,7 @@ class GlobalHandler:
     def getModel(self, hashstr, key=None):
         table = self.get_table()
         if key:
-            return table[key]
+            return table[hashstr][key]
         return table
 
 class ModelHandler:
