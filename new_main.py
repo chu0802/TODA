@@ -30,7 +30,7 @@ def arguments_parsing():
     p.add('--target', type=int, default=1)
 
     # training settings
-    p.add('--seed', type=int, default=12845)
+    p.add('--seed', type=int, default=2020)
     p.add('--bsize', type=int, default=32)
     p.add('--num_iters', type=int, default=3000)
     p.add('--alpha', type=float, default=0.5)

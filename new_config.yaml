@@ -4,7 +4,7 @@ target: 1
 # training settings
 seed: 2020
 bsize: 32
-num_iters: 1000
+num_iters: 2000
 eval_interval: 100
 
 alpha: 0.5
