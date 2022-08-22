@@ -87,7 +87,7 @@ class ModelHandler:
 
         self.model_path = self.gh.model_dir / f'{self.hashstr}.pt'
         self.feature_path = self.gh.feature_dir / f'{self.hashstr}.npz'
-        self.log_path = self.gh.log_dir / '/'.join([f'{k}:{v}' for k, v in self.cfg.items()])
+        self.log_path = self.gh.log_dir / '/'.join([f'{k}:{v}' for k, v in self.cfg.items()]) / self.hashstr
 
         self.init()
         self.gh.update(self.hashstr, self.__dict__.copy())
