@@ -166,7 +166,7 @@ def main(args):
     for i in range(1, args.num_iters+1):
         sx, sy1 = next(s_iter)
         sx, sy1 = sx.float().cuda(), sy1.long().cuda()
-        sy2 = F.softmax(model(sx).detach() * args.T)
+        sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
