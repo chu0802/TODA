@@ -42,6 +42,8 @@ def arguments_parsing():
     
     # optimizer
     p.add('--lr', type=float, default=1e-2)
+    p.add('--momentum', type=float, default=0.9)
+    p.add('--weight_decay', type=float, default=5e-4)
     p.add('--T', type=float, default=0.05)
     p.add('--note', type=str, default='')
     return p.parse_args()
