@@ -46,6 +46,8 @@ def arguments_parsing():
     p.add('--weight_decay', type=float, default=5e-4)
     p.add('--T', type=float, default=0.05)
     p.add('--note', type=str, default='')
+
+    p.add('--pre_trained', type=str, default='')
     return p.parse_args()
 
 class LR_Scheduler(object):
@@ -102,7 +104,6 @@ def load(path, **models):
     state_dict = torch.load(path, map_location='cpu')
     for m, v in models.items():
         v.load_state_dict(state_dict[m])
-        v.cuda()
         
 def normalize(x):
     return (x - x.mean(axis=0))/x.std(axis=0)
@@ -119,7 +120,10 @@ def main(args):
     set_seed(args.seed)
 
     bottleneck_dim = 512
-    model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes']).cuda()
+    model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
+    load(args.mdh.gh.getModel(args.pre_trained, key='model_path'), model=model)
+    model.cuda()
+
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
@@ -158,10 +162,11 @@ def main(args):
     model.train()
 
     writer = SummaryWriter(args.mdh.getLogPath())
-    writer.add_text('Hash', args.mdh.hashstr, 0)
+
     for i in range(1, args.num_iters+1):
         sx, sy1 = next(s_iter)
         sx, sy1 = sx.float().cuda(), sy1.long().cuda()
+        sy2 = F.softmax(model(sx).detach() * args.T)
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
@@ -176,7 +181,9 @@ def main(args):
         if args.method == 'base':
             s_loss = model.base_loss(sx, sy1)
             t_loss = model.base_loss(lx, ly)
-        
+        elif args.method == 'lc':
+            s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
+            t_loss = model.base_loss(lx, ly)
         loss = (s_loss + t_loss)/2
         info = 's_loss: %.4f, t_loss %.4f' % (s_loss.item(), t_loss.item())
         loss.backward()
@@ -198,7 +205,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'pre_trained'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]

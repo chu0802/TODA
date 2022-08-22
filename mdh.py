@@ -77,6 +77,12 @@ class GlobalHandler:
         for k in table.keys():
             self.remove(k)
 
+    def getModel(self, hashstr, key=None):
+        table = self.get_table()
+        if key:
+            return table[key]
+        return table
+
 class ModelHandler:
     def __init__(self, cfg, keys=None, gh=None):
         self.gh = GlobalHandler() if not gh else gh
