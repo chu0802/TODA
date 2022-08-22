@@ -8,6 +8,7 @@ from ast import literal_eval
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 from model import ResModel
@@ -20,7 +21,8 @@ def arguments_parsing():
     p = configargparse.ArgumentParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
     p.add('--config', is_config_file=True, default='./new_config.yaml')
     p.add('--device', type=str, default='0')
-    p.add('--mode', type=str, default='train')
+    p.add('--mode', type=str, default='ssda')
+    p.add('--method', type=str, default='base')
     # choosing strategies, and models, and datasets
     p.add('--dataset', type=str, default='OfficeHome')
 
@@ -120,33 +122,34 @@ def main(args):
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
-    label_correction_soft_labels = np.load(f'data/labels/avg_distance/ideal/s{args.source}_t{args.target}_{args.T}.npy')
-    path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-    s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
-    s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    # label_correction_soft_labels = np.load(f'data/labels/avg_distance/ideal/s{args.source}_t{args.target}_{args.T}.npy')
+    # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+    # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
+    # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
     s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
     
-    if args.mode == 'uda':
-        t_unlabeled_train_dset, t_unlabeled_train_loader = load_img_data(args, args.target, train=True)
-        t_unlabeled_test_dset, t_unlabeled_test_loader = load_img_data(args, args.target, train=False)
-    elif args.mode == 'ssda':
-        root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
-        t_train_idx_path = root / f'{t_name}_train_3.txt'
-        t_test_idx_path = root / f'{t_name}_test_3.txt'
+    # if args.mode == 'uda':
+    #     t_unlabeled_train_dset, t_unlabeled_train_loader = load_img_data(args, args.target, train=True)
+    #     t_unlabeled_test_dset, t_unlabeled_test_loader = load_img_data(args, args.target, train=False)
+    # elif args.mode == 'ssda':
+    root, t_name = Path(args.dataset['path']), args.dataset['domains'][args.target]
+    t_train_idx_path = root / f'{t_name}_train_3.txt'
+    t_test_idx_path = root / f'{t_name}_test_3.txt'
 
-        t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
-        t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+    t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=True))
+    t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
 
-        t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
-        t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
+    t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
+    t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
 
-        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
-        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
-        
-        t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
-        t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
+    t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
+    t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize, train=True)
+    
+    t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
+    t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
 
-        l_iter = iter(t_labeled_train_loader)
+    l_iter = iter(t_labeled_train_loader)
     s_iter = iter(s_train_loader)
     u_iter = iter(t_unlabeled_train_loader)
 
@@ -155,27 +158,29 @@ def main(args):
     writer = SummaryWriter(args.mdh.getLogPath())
     writer.add_text('Note', args.note, 0)
     for i in range(1, args.num_iters+1):
-        sx, sy1, sy2 = next(s_iter)
-        sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
-        
+        sx, sy1 = next(s_iter)
+        sx, sy1 = sx.float().cuda(), sy1.long().cuda()
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
         opt.zero_grad()
 
-        if args.mode == 'uda':
-            loss = model.lc_loss(sx, sy1, sy2, args.alpha)
-            info = 's_loss: %.4f' % (loss.item())
-        elif args.mode == 'ssda':
-            lx, ly = next(l_iter)
-            lx, ly = lx.float().cuda(), ly.long().cuda()
-            s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
+        # if args.mode == 'uda':
+        #     loss = model.lc_loss(sx, sy1, sy2, args.alpha)
+        #     info = 's_loss: %.4f' % (loss.item())
+        # elif args.mode == 'ssda':
+        lx, ly = next(l_iter)
+        lx, ly = lx.float().cuda(), ly.long().cuda()
+        if args.method == 'base':
+            s_loss = model.base_loss(sx, sy1)
             t_loss = model.base_loss(lx, ly)
-            loss = (s_loss + t_loss)/2
-            info = 's_loss: %.4f, t_loss %.4f' % (s_loss.item(), t_loss.item())
+        
+        loss = (s_loss + t_loss)/2
+        info = 's_loss: %.4f, t_loss %.4f' % (s_loss.item(), t_loss.item())
         loss.backward()
         opt.step()
         lr_scheduler.step()
+
         print('iteration: %03d/%03d, lr: %.4f, %s' % (i, args.num_iters, lr_scheduler.get_lr(), info), end='\r')
         if i % args.eval_interval == 0:
             s_acc = evaluation(s_test_loader, model)
@@ -191,7 +196,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'mode', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
