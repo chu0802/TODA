@@ -14,7 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from model import ResModel
 from util import set_seed
 from dataset import LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
-from evaluation import evaluation, get_features
+from evaluation import evaluation, get_features, get_predictions
 from mdh import ModelHandler
 
 def arguments_parsing():
@@ -47,7 +47,7 @@ def arguments_parsing():
     p.add('--T', type=float, default=0.05)
     p.add('--note', type=str, default='')
 
-    p.add('--pre_trained', type=str, default='')
+    p.add('--init', type=str, default='')
     return p.parse_args()
 
 class LR_Scheduler(object):
@@ -120,22 +120,27 @@ def main(args):
     set_seed(args.seed)
 
     bottleneck_dim = 512
-    model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
-    if args.pre_trained != '':
-        load(args.mdh.gh.getModelPath(args.pre_trained), model=model)
-    model.cuda()
-
+    model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes']).cuda()
+    # if args.pre_trained != '':
+    #     load(args.mdh.gh.getModelPath(args.pre_trained), model=model)
+    
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
-    # label_correction_soft_labels = np.load(f'data/labels/avg_distance/ideal/s{args.source}_t{args.target}_{args.T}.npy')
-    # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-    # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), label_correction_soft_labels)
-    # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
-    s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
     s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
+
+    init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
+    load(args.mdh.gh.getModelPath(args.init), model=init_model)
+    init_model.cuda()
+    soft_labels = get_predictions(s_test_loader, init_model)
+    path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+    s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
+    s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    # s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
     
+    torch.cuda.empty_cache()
+
     if args.mode == 'uda':
         t_unlabeled_train_dset, t_unlabeled_train_loader = load_img_data(args, args.target, train=True)
         t_unlabeled_test_dset, t_unlabeled_test_loader = load_img_data(args, args.target, train=False)
@@ -166,8 +171,8 @@ def main(args):
 
     for i in range(1, args.num_iters+1):
         sx, sy1 = next(s_iter)
-        sx, sy1 = sx.float().cuda(), sy1.long().cuda()
-        sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
+        sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
+        sy2 = F.softmax(sy2.detach() * args.T, dim=1)
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
@@ -207,7 +212,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'pre_trained'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]

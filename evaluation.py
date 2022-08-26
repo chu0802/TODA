@@ -18,6 +18,16 @@ def evaluation(loader, *models):
     acc = (pred == true).float().mean()
     return acc.item()
 
+def get_predictions(loader, model):
+    model.eval()
+    pred = []
+    with torch.no_grad():
+        for x, _ in loader:
+            x = x.cuda().float()
+            x = model(x)
+            pred.append(x.detach().cpu().numpy())
+    return np.vstack(pred)
+
 def get_features(loader, *models):
     for m in models:
         m.eval()
