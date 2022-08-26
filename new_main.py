@@ -130,14 +130,14 @@ def main(args):
 
     s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
 
-    init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
-    load(args.mdh.gh.getModelPath(args.init), model=init_model)
-    init_model.cuda()
-    soft_labels = get_predictions(s_test_loader, init_model)
-    path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-    s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
-    s_train_loader = load_img_dloader(args, s_train_dset, train=True)
-    # s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
+    # init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
+    # load(args.mdh.gh.getModelPath(args.init), model=init_model)
+    # init_model.cuda()
+    # soft_labels = get_predictions(s_test_loader, init_model)
+    # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+    # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
+    # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
     
     torch.cuda.empty_cache()
 
@@ -170,9 +170,12 @@ def main(args):
     writer = SummaryWriter(args.mdh.getLogPath())
 
     for i in range(1, args.num_iters+1):
-        sx, sy1, sy2 = next(s_iter)
-        sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
-        sy2 = F.softmax(sy2.detach() * args.T, dim=1)
+        # sx, sy1, sy2 = next(s_iter)
+        # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
+        # sy2 = F.softmax(sy2.detach() * args.T, dim=1)
+        sx, sy1 = next(s_iter)
+        sx, sy1 = sx.float().cuda(), sy1.long().cuda()
+        sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
@@ -180,7 +183,7 @@ def main(args):
 
         if args.method == 'base':
             s_loss = model.base_loss(sx, sy1)
-        elif args.method == 'lc':
+        elif 'lc' in args.method:
             s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
 
         if args.mode == 'uda':
