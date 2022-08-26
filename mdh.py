@@ -77,11 +77,19 @@ class GlobalHandler:
         for k in table.keys():
             self.remove(k)
 
-    def getModel(self, hashstr, key=None):
+    def getModelPath(self, hashstr):
         table = self.get_table()
-        if key:
-            return table[hashstr][key]
-        return table
+        if hashstr in table:
+            return self.model_dir / table[hashstr]['model_path']
+    def getLogPath(self, hashstr):
+        table = self.get_table()
+        if hashstr in table:
+            return self.log_dir / table[hashstr]['log_path']
+    
+    def getFeaturePath(self, hashstr):
+        table = self.get_table()
+        if hashstr in table:
+            return self.feature_dir / table[hashstr]['feature_path']
 
 class ModelHandler:
     def __init__(self, cfg, keys=None, gh=None):
@@ -93,9 +101,9 @@ class ModelHandler:
         self.cfg = {k: cfg[k] for k in sorted(keys)} if keys else dict(sorted(cfg.items(), key=lambda x: x[0]))
         self.hashstr = self.gh.hashing(self.cfg)
 
-        self.model_path = self.gh.model_dir / f'{self.hashstr}.pt'
-        self.feature_path = self.gh.feature_dir / f'{self.hashstr}.npz'
-        self.log_path = self.gh.log_dir / '/'.join([f'{k}:{v}' for k, v in self.cfg.items()]) / self.hashstr
+        self.model_path = f'{self.hashstr}.pt'
+        self.feature_path = f'{self.hashstr}.npz'
+        self.log_path = '/'.join([f'{k}:{v}' for k, v in self.cfg.items()]) / self.hashstr
 
         self.init()
         self.gh.update(self.hashstr, self.__dict__.copy())
@@ -105,16 +113,18 @@ class ModelHandler:
         self.feature_path.parent.mkdir(parents=True, exist_ok=True)
         self.log_path.mkdir(parents=True, exist_ok=True)
         self.gh.table_path.parent.mkdir(parents=True, exist_ok=True)
+
     def getHashStr(self):
         return self.hashstr
+
     def getModelPath(self):
-        return self.model_path
+        return self.gh.model_dir / self.model_path
 
     def getLogPath(self):
-        return self.log_path
+        return self.gh.log_dir / self.log_path
     
     def getFeaturePath(self):
-        return self.feature_path
+        return self.gh.feature_dir / self.feature_path
 
     def remove(self):
         self.gh.remove(self.hashstr)
