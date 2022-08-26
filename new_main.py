@@ -121,7 +121,8 @@ def main(args):
 
     bottleneck_dim = 512
     model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
-    load(args.mdh.gh.getModel(args.pre_trained, key='model_path'), model=model)
+    if args.pre_trained != '':
+        load(args.mdh.gh.getModel(args.pre_trained, key='model_path'), model=model)
     model.cuda()
 
     params = model.get_params(args.lr)
@@ -186,7 +187,7 @@ def main(args):
             t_loss = model.base_loss(lx, ly)
             loss = (s_loss + t_loss)/2
             info = 's_loss: %.4f, t_loss %.4f' % (s_loss.item(), t_loss.item())
-            
+
         loss.backward()
         opt.step()
         lr_scheduler.step()
