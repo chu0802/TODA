@@ -109,9 +109,9 @@ class ModelHandler:
         self.gh.update(self.hashstr, self.__dict__.copy())
 
     def init(self):
-        self.model_path.parent.mkdir(parents=True, exist_ok=True)
-        self.feature_path.parent.mkdir(parents=True, exist_ok=True)
-        self.log_path.mkdir(parents=True, exist_ok=True)
+        self.getModelPath().parent.mkdir(parents=True, exist_ok=True)
+        self.getFeaturePath().parent.mkdir(parents=True, exist_ok=True)
+        self.getLogPath().mkdir(parents=True, exist_ok=True)
         self.gh.table_path.parent.mkdir(parents=True, exist_ok=True)
 
     def getHashStr(self):
