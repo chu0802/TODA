@@ -122,7 +122,7 @@ def main(args):
     bottleneck_dim = 512
     model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
     if args.pre_trained != '':
-        load(args.mdh.gh.getModel(args.pre_trained, key='model_path'), model=model)
+        load(args.mdh.gh.getModelPath(args.pre_trained), model=model)
     model.cuda()
 
     params = model.get_params(args.lr)
