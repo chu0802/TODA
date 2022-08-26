@@ -170,7 +170,7 @@ def main(args):
     writer = SummaryWriter(args.mdh.getLogPath())
 
     for i in range(1, args.num_iters+1):
-        sx, sy1 = next(s_iter)
+        sx, sy1, sy2 = next(s_iter)
         sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
         sy2 = F.softmax(sy2.detach() * args.T, dim=1)
         ux, _ = next(u_iter)
