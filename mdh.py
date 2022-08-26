@@ -105,7 +105,8 @@ class ModelHandler:
         self.feature_path.parent.mkdir(parents=True, exist_ok=True)
         self.log_path.mkdir(parents=True, exist_ok=True)
         self.gh.table_path.parent.mkdir(parents=True, exist_ok=True)
-
+    def getHashStr(self):
+        return self.hashstr
     def getModelPath(self):
         return self.model_path
 
