@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from configparser import Interpolation
 from torchvision import models
-from torchvision.models import ResNet50_Weights, ResNet34_Weights
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -58,9 +57,9 @@ def init_weights(m):
 
 
 class ResBase(nn.Module):
-    def __init__(self, backbone='resnet50', output_dim=256, **kwargs):
+    def __init__(self, backbone='resnet50', weights='ResNet50_Weights', output_dim=256, **kwargs):
         super(ResBase, self).__init__()
-        self.res = models.__dict__[backbone](**kwargs)
+        self.res = models.__dict__[backbone](weights=models.__dict__[weights].DEFAULT)
         self.last_dim = self.res.fc.in_features
         self.res.fc = nn.Identity()
 #         self.res.fc = nn.Sequential(
@@ -129,9 +128,9 @@ class prototypical_classifier(nn.Module):
 # +
 
 class ResModel(nn.Module):
-    def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65):
+    def __init__(self, backbone='resnet34', weights='ResNet34_Weights', bottleneck_dim=512, output_dim=65):
         super(ResModel, self).__init__()
-        self.f = ResBase(backbone=backbone, weights=ResNet34_Weights.DEFAULT)
+        self.f = ResBase(backbone=backbone, weights=weights)
         self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
         self.c = Classifier(bottleneck_dim, output_dim)
         self.criterion = nn.CrossEntropyLoss()
@@ -159,9 +158,9 @@ class ResModel(nn.Module):
         return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
 
 class ResExtractor(nn.Module):
-    def __init__(self, backbone='resnet34', bottleneck_dim=512):
+    def __init__(self, backbone='resnet34', weights='ResNet34_Weights', bottleneck_dim=512):
         super(ResExtractor, self).__init__()
-        self.f = ResBase(backbone=backbone, pretrained=True)
+        self.f = ResBase(backbone=backbone, weights=weights)
         self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
     def forward(self, x):
         return self.b(self.f(x)).detach()
