@@ -61,7 +61,7 @@ class GlobalHandler:
             (self.feature_dir / table[key]['feature_path']).unlink(missing_ok=True)
             for d in (self.log_dir / table[key]['log_path']).iterdir():
                 d.unlink(missing_ok=True)
-            rmdir(table[key]['log_path'])
+            rmdir(self.log_dir / table[key]['log_path'])
             del table[key]
         self.dump_table(table)
 
