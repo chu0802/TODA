@@ -128,9 +128,9 @@ class prototypical_classifier(nn.Module):
 # +
 
 class ResModel(nn.Module):
-    def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65):
+    def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65, pre_trained=True):
         super(ResModel, self).__init__()
-        self.f = ResBase(backbone=backbone, weights=models.__dict__[f'ResNet{backbone[-2:]}_Weights'].DEFAULT)
+        self.f = ResBase(backbone=backbone, weights=models.__dict__[f'ResNet{backbone[-2:]}_Weights'].DEFAULT if pre_trained else None)
         self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
         self.c = Classifier(bottleneck_dim, output_dim)
         self.criterion = nn.CrossEntropyLoss()
