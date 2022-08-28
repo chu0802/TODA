@@ -168,7 +168,7 @@ def main(args):
     model.train()
 
     writer = SummaryWriter(args.mdh.getLogPath())
-
+    writer.add_text('Hash', args.mdh.getHashStr())
     for i in range(1, args.num_iters+1):
         # sx, sy1, sy2 = next(s_iter)
         # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
