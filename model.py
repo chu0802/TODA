@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Function
-
+from scipy.special import softmax
+from scipy.spatial.distance import cdist
 import torch.nn.utils.weight_norm as weightNorm
 
 import numpy as np
@@ -113,17 +114,22 @@ class VGGBase(nn.Module):
 #         return self.fc(x)
 # -
 
-class prototypical_classifier(nn.Module):
-    def __init__(self, center):
-        super(prototypical_classifier, self).__init__()
+class torch_prototypical_classifier(nn.Module):
+    def __init__(self, center=None):
+        super(torch_prototypical_classifier, self).__init__()
         self.center = None
-        self.update_center(center)
+        if center:
+            self.update_center(center)
     def update_center(self, c):
         self.center = c
         self.center.require_grad = False
-    def forward(self, x):
+    def forward(self, x, T=1.0):
         dist = torch.cdist(x, self.center)
-        return -dist
+        return F.softmax(-dist*T, dim=1)
+
+def prototypical_classifier(source, center, T=1.0):
+    dist = cdist(source, center)
+    return softmax(-dist * T, axis=1)
 
 # +
 
@@ -156,6 +162,17 @@ class ResModel(nn.Module):
         l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
         soft_loss = -(y2 * log_softmax_out).sum(axis=1)
         return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+    def targetRP_loss(self, x, y1, centers, T, alpha):
+        sf = self.get_features(x)
+        out = self.c(sf)
+        dist = torch.cdist(sf.detach(), centers)
+        y2 = F.softmax(-dist * T, dim=1)
+        log_softmax_out = F.log_softmax(out, dim=1)
+        l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
+        soft_loss = -(y2 * log_softmax_out).sum(axis=1)
+        return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+
+
 
 class ResExtractor(nn.Module):
     def __init__(self, backbone='resnet34', weights='ResNet34_Weights', bottleneck_dim=512):

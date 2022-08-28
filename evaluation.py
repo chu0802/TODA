@@ -18,6 +18,15 @@ def evaluation(loader, *models):
     acc = (pred == true).float().mean()
     return acc.item()
 
+def get_features(loader, model):
+    model.eval()
+    features = []
+    with torch.no_grad():
+        for x, _ in loader:
+            x = x.cuda().float()
+            x = model.get_features(x)
+            features.append(x.detach().cpu().numpy())
+    return np.vstack(features)
 def get_predictions(loader, model):
     model.eval()
     pred = []
@@ -28,16 +37,16 @@ def get_predictions(loader, model):
             pred.append(x.detach().cpu().numpy())
     return np.vstack(pred)
 
-def get_features(loader, *models):
-    for m in models:
-        m.eval()
-    features, labels = [], []
-    with torch.no_grad():
-        for x, y in loader:
-            x = x.cuda().float()
-            for m in models:
-                x = m(x)
-            features.append(x.detach().cpu().numpy())
-            labels.append(y.detach().numpy())
-    print(labels[0].shape)
-    return np.c_[np.vstack(features), np.hstack(labels)]
+# def get_features(loader, *models):
+#     for m in models:
+#         m.eval()
+#     features, labels = [], []
+#     with torch.no_grad():
+#         for x, y in loader:
+#             x = x.cuda().float()
+#             for m in models:
+#                 x = m(x)
+#             features.append(x.detach().cpu().numpy())
+#             labels.append(y.detach().numpy())
+#     print(labels[0].shape)
+#     return np.c_[np.vstack(features), np.hstack(labels)]

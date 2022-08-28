@@ -11,7 +11,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-from model import ResModel
+from model import ResModel, prototypical_classifier, torch_prototypical_classifier
 from util import set_seed
 from dataset import LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_predictions
@@ -121,25 +121,12 @@ def main(args):
 
     bottleneck_dim = 512
     model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes']).cuda()
-    # if args.pre_trained != '':
-    #     load(args.mdh.gh.getModelPath(args.pre_trained), model=model)
-    
+
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
     s_test_dset, s_test_loader = load_img_data(args, args.source, train=False)
-
-    # init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
-    # load(args.mdh.gh.getModelPath(args.init), model=init_model)
-    # init_model.cuda()
-    # soft_labels = get_predictions(s_test_loader, init_model)
-    # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
-    # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
-    # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
-    s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
-    
-    torch.cuda.empty_cache()
 
     if args.mode == 'uda':
         t_unlabeled_train_dset, t_unlabeled_train_loader = load_img_data(args, args.target, train=True)
@@ -162,6 +149,35 @@ def main(args):
         t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, train=False)
 
         l_iter = iter(t_labeled_train_loader)
+
+
+    if args.method == 'base' or args.method == 'targetRP':
+        s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
+    elif args.method == 'RP':
+        init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'], pre_trained=False)
+        load(args.mdh.gh.getModelPath(args.init), model=init_model)
+        init_model.cuda()
+
+        target_preds = get_predictions(t_unlabeled_test_loader, init_model).argmax(axis=1)
+        target_features = get_features(t_unlabeled_test_loader, model)
+        target_centers = np.stack([target_features[target_preds == i].mean(axis=0) for i in range(args.dataset['num_classes'])])
+
+        source_features = get_features(s_test_loader, model)
+        soft_labels = prototypical_classifier(source_features, target_centers, args.T)
+
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
+        s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+
+    # soft_labels = get_predictions(s_test_loader, init_model)
+    # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+    # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
+    # s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    
+    
+    torch.cuda.empty_cache()
+
+    
     s_iter = iter(s_train_loader)
     u_iter = iter(t_unlabeled_train_loader)
 
@@ -169,23 +185,40 @@ def main(args):
 
     writer = SummaryWriter(args.mdh.getLogPath())
     writer.add_text('Hash', args.mdh.getHashStr())
+
     for i in range(1, args.num_iters+1):
-        # sx, sy1, sy2 = next(s_iter)
-        # sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
-        # sy2 = F.softmax(sy2.detach() * args.T, dim=1)
-        sx, sy1 = next(s_iter)
-        sx, sy1 = sx.float().cuda(), sy1.long().cuda()
-        sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
         opt.zero_grad()
 
         if args.method == 'base':
+            sx, sy1 = next(s_iter)
+            sx, sy1 = sx.float().cuda(), sy1.long().cuda()
             s_loss = model.base_loss(sx, sy1)
-        elif 'lc' in args.method:
+        elif args.method == 'RP':
+            sx, sy1, sy2 = next(s_iter)
+            sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
             s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
+        elif args.method == 'targetRP':
+            t_train_features, t_train_labels = [], []
+            model.eval()
+            with torch.no_grad():
+                for tx, ty in t_labeled_test_loader:
+                    tx = tx.float().cuda()
+                    t_train_features.append(model.get_features(tx))
+                    t_train_labels.append(ty)
+                t_features = torch.vstack(t_train_features)
+                t_labels = torch.hstack(t_train_labels)
+                centers = torch.stack([t_features[t_labels == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+            model.train()
+            sx, sy1 = next(s_iter)
+            sx, sy1 = sx.float().cuda(), sy1.long().cuda()
+            s_loss = model.targetRP_loss(sx, sy1, centers, args.T, args.alpha)
 
+        # elif 'lc' in args.method:
+        #     s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
+        #     sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
         if args.mode == 'uda':
             loss = s_loss
             info = 's_loss: %.4f' % (s_loss.item())
@@ -215,7 +248,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
