@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from configparser import Interpolation
-from torchvision import models
+from torchvision import models, ResNet50_Weights, ResNet34_Weights
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
