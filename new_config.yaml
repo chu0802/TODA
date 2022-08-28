@@ -4,11 +4,11 @@ target: 1
 # training settings
 seed: 2020
 bsize: 32
-num_iters: 2000
+num_iters: 5000
 eval_interval: 100
 
-alpha: 0.5
-T: 1
+alpha: 0.8
+T: 1.0
 
 # optimizer
 lr: 0.1
@@ -19,7 +19,7 @@ weight_decay: 0.0005
 dataset_cfg:
     OfficeHome:
         name: OfficeHome
-        path: /tmp2/cllab/chu/DA/data/OfficeHome
+        path: ~/data/OfficeHome
         num_classes: 65
         domains:
                 - Art
@@ -28,7 +28,7 @@ dataset_cfg:
                 - RealWorld
     Office31:
         name: Office31
-        path: /work/chu980802/data/Office31
+        path: ~/data/Office31
         num_classes: 31
         domains:
                 - amazon
