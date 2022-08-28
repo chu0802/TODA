@@ -57,9 +57,9 @@ class GlobalHandler:
     def remove(self, key):
         table = self.get_table()
         if key in table:
-            table[key]['model_path'].unlink(missing_ok=True)
-            table[key]['feature_path'].unlink(missing_ok=True)
-            for d in table[key]['log_path'].iterdir():
+            (self.model_dir / table[key]['model_path']).unlink(missing_ok=True)
+            (self.feature_dir / table[key]['feature_path']).unlink(missing_ok=True)
+            for d in (self.log_dir / table[key]['log_path']).iterdir():
                 d.unlink(missing_ok=True)
             rmdir(table[key]['log_path'])
             del table[key]
