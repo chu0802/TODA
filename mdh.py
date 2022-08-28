@@ -2,14 +2,16 @@ import hashlib
 from pathlib import Path
 import pickle
 from argparse import Namespace
+from time import sleep
 
 def rmdir(path: Path):
     try:
         path.rmdir()
-        rmdir(path.parent)
-        if path == 'log':
+        if str(path) == 'log':
             return
+        rmdir(path.parent)
     except:
+        print(path)
         return
 
 class GlobalHandler:
@@ -62,7 +64,7 @@ class GlobalHandler:
             (self.model_dir / table[key]['model_path']).unlink(missing_ok=True)
             (self.feature_dir / table[key]['feature_path']).unlink(missing_ok=True)
             for d in (self.log_dir / table[key]['log_path']).iterdir():
-                d.unlink(missing_ok=True)
+                d.unlink()
             rmdir(self.log_dir / table[key]['log_path'])
             del table[key]
         self.dump_table(table)
