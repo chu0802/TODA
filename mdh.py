@@ -7,6 +7,8 @@ def rmdir(path: Path):
     try:
         path.rmdir()
         rmdir(path.parent)
+        if path == 'log':
+            return
     except:
         return
 
