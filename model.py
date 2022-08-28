@@ -59,6 +59,7 @@ def init_weights(m):
 class ResBase(nn.Module):
     def __init__(self, backbone='resnet50', weights='ResNet50_Weights', output_dim=256, **kwargs):
         super(ResBase, self).__init__()
+        print(models.__dict__[weights].DEFAULT)
         self.res = models.__dict__[backbone](weights=models.__dict__[weights].DEFAULT)
         self.last_dim = self.res.fc.in_features
         self.res.fc = nn.Identity()
