@@ -57,10 +57,9 @@ def init_weights(m):
 
 
 class ResBase(nn.Module):
-    def __init__(self, backbone='resnet50', weights='ResNet50_Weights', output_dim=256, **kwargs):
+    def __init__(self, backbone='resnet50', output_dim=256, **kwargs):
         super(ResBase, self).__init__()
-        print(models.__dict__[weights].DEFAULT)
-        self.res = models.__dict__[backbone](weights=models.__dict__[weights].DEFAULT)
+        self.res = models.__dict__[backbone](**kwargs)
         self.last_dim = self.res.fc.in_features
         self.res.fc = nn.Identity()
 #         self.res.fc = nn.Sequential(
@@ -129,9 +128,9 @@ class prototypical_classifier(nn.Module):
 # +
 
 class ResModel(nn.Module):
-    def __init__(self, backbone='resnet34', weights='ResNet34_Weights', bottleneck_dim=512, output_dim=65):
+    def __init__(self, backbone='resnet34', bottleneck_dim=512, output_dim=65):
         super(ResModel, self).__init__()
-        self.f = ResBase(backbone=backbone, weights=weights)
+        self.f = ResBase(backbone=backbone, weights=models.__dict__[f'ResNet{backbone[-2:]}_Weights'].DEFAULT)
         self.b = BottleNeck(self.f.last_dim, bottleneck_dim)
         self.c = Classifier(bottleneck_dim, output_dim)
         self.criterion = nn.CrossEntropyLoss()
