@@ -33,7 +33,7 @@ hash_table_name: config_hash_table.pkl
 dataset_cfg:
     OfficeHome:
         name: OfficeHome
-        path: /work/chu980802/data/OfficeHome
+        path: /tmp2/cllab/chu/DA/data/OfficeHome
         num_classes: 65
         domains:
                 - Art

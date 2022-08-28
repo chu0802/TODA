@@ -19,7 +19,7 @@ weight_decay: 0.0005
 dataset_cfg:
     OfficeHome:
         name: OfficeHome
-        path: /work/chu980802/data/OfficeHome
+        path: /tmp2/cllab/chu/DA/data/OfficeHome
         num_classes: 65
         domains:
                 - Art
