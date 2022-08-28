@@ -33,7 +33,7 @@ hash_table_name: config_hash_table.pkl
 dataset_cfg:
     OfficeHome:
         name: OfficeHome
-        path: ~/data/OfficeHome
+        path: /home/chu0802/data/OfficeHome
         num_classes: 65
         domains:
                 - Art
@@ -42,7 +42,7 @@ dataset_cfg:
                 - RealWorld
     Office31:
         name: Office31
-        path: ~/data/Office31
+        path: /home/chu0802/data/Office31
         num_classes: 31
         domains:
                 - amazon
