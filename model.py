@@ -170,7 +170,7 @@ class ResModel(nn.Module):
         return kl_loss.mean()
     def mpd_loss(self, x, y, T, alpha):
         out = self.forward(x)
-        y2 = F.softmax(out * T)
+        y2 = F.softmax(out * T, dim=1)
         log_softmax_out = F.log_softmax(out, dim=1)
         l_loss = nn.CrossEntropyLoss(reduction='none')(out, y)
         soft_loss = -(y2 * log_softmax_out).sum(axis=1)
