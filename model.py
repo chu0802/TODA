@@ -168,6 +168,13 @@ class ResModel(nn.Module):
         target = y2.mul(alpha).scatter(dim=1, index=y1.reshape(-1, 1), value=1-alpha, reduce='add')
         kl_loss = (target * (torch.log(target) - log_softmax_out)).sum(axis=1)
         return kl_loss.mean()
+    def mpd_loss(self, x, y, T, alpha):
+        out = self.forward(x)
+        y2 = F.softmax(out * T)
+        log_softmax_out = F.log_softmax(out, dim=1)
+        l_loss = nn.CrossEntropyLoss(reduction='none')(out, y)
+        soft_loss = -(y2 * log_softmax_out).sum(axis=1)
+        return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
     def targetRP_loss(self, x, y1, centers, T, alpha):
         sf = self.get_features(x)
         out = self.c(sf)
