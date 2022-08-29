@@ -120,7 +120,12 @@ def main(args):
     set_seed(args.seed)
 
     bottleneck_dim = 512
-    model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes']).cuda()
+    if args.method == 'targetRP' or args.method == 'initTargetRP':
+        model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'])
+        load(args.mdh.gh.getModelPath(args.init), model=model)
+        model.cuda()
+    else:
+        model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes']).cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
@@ -168,7 +173,17 @@ def main(args):
         path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
         s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
         s_train_loader = load_img_dloader(args, s_train_dset, train=True)
+    elif args.method == 'initTargetRP':
+        target_features = get_features(t_labeled_test_loader, model)
+        labels = np.tile(np.arange(args.dataset['num_classes']), (3, 1)).T.flatten()
+        target_centers = np.stack([target_features[labels == i].mean(axis=0) for i in range(args.dataset['num_classes'])])
 
+        source_features = get_features(s_test_loader, model)
+        soft_labels = prototypical_classifier(source_features, target_centers, args.T)
+
+        path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
+        s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
+        s_train_loader = load_img_dloader(args, s_train_dset, train=True)
     # soft_labels = get_predictions(s_test_loader, init_model)
     # path = Path(args.dataset['path']) / args.dataset['domains'][args.source]
     # s_train_dset = LabelTransformImageFolder(path, TransformNormal(train=True), soft_labels)
@@ -196,7 +211,7 @@ def main(args):
             sx, sy1 = next(s_iter)
             sx, sy1 = sx.float().cuda(), sy1.long().cuda()
             s_loss = model.base_loss(sx, sy1)
-        elif args.method == 'RP':
+        elif args.method == 'RP' or args.method == 'initTargetRP':
             sx, sy1, sy2 = next(s_iter)
             sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
             s_loss = model.lc_loss(sx, sy1, sy2, args.alpha)
@@ -248,9 +263,10 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
     args.mdh = mdh
     main(args)
+
