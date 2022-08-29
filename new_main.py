@@ -158,7 +158,7 @@ def main(args):
 
     if args.method == 'base' or args.method == 'targetRP':
         s_trian_dset, s_train_loader = load_img_data(args, args.source, train=True)
-    elif args.method == 'RP':
+    elif args.method == 'RP' or args.method == 'RPKL':
         init_model = ResModel('resnet34', bottleneck_dim, args.dataset['num_classes'], pre_trained=False)
         load(args.mdh.gh.getModelPath(args.init), model=init_model)
         init_model.cuda()
@@ -211,6 +211,10 @@ def main(args):
             sx, sy1 = next(s_iter)
             sx, sy1 = sx.float().cuda(), sy1.long().cuda()
             s_loss = model.base_loss(sx, sy1)
+        elif args.method == 'RPKL':
+            sx, sy1, sy2 = next(s_iter)
+            sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
+            s_loss = model.lckl_loss(sx, sy1, sy2, args.alpha)
         elif args.method == 'RP' or args.method == 'initTargetRP':
             sx, sy1, sy2 = next(s_iter)
             sx, sy1, sy2 = sx.float().cuda(), sy1.long().cuda(), sy2.float().cuda()
