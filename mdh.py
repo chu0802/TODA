@@ -3,6 +3,7 @@ from pathlib import Path
 import pickle
 from argparse import Namespace
 from time import sleep
+import re
 
 def rmdir(path: Path):
     try:
@@ -80,6 +81,11 @@ class GlobalHandler:
         table = self.get_table()
         for k in table.keys():
             self.remove(k)
+    def regSearch(self, reg):
+        table = self.get_table()
+        ret = list(filter(lambda x: re.search(reg, x['log_path']), table.values()))
+        return [r['hashstr'] for r in ret]
+
 
     def getModelPath(self, hashstr):
         table = self.get_table()
