@@ -12,8 +12,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-from mme_model import ResModel
-# from model import ResModel, prototypical_classifier, torch_prototypical_classifier
+# from mme_model import ResModel
+from model import ResModel, prototypical_classifier, torch_prototypical_classifier
 from util import set_seed
 from dataset import get_loaders, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_predictions
@@ -58,7 +58,7 @@ class LR_Scheduler(object):
         self.optimizer = optimizer
         self.iter = 0
         self.num_iters = num_iters
-        self.current_lr = 0
+        self.current_lr = optimizer.param_groups[-1]['lr']
     def step(self):
         for param_group in self.optimizer.param_groups:
             base = param_group['base_lr']
@@ -66,7 +66,6 @@ class LR_Scheduler(object):
                 self.final_lr + 0.5 * (base - self.final_lr)*(1 + np.cos(np.pi * self.iter/self.num_iters))
                 if self.final_lr
                 else base * ((1 + 0.0001 * self.iter) ** (-0.75))
-#                 else base * ((1 + 0.0001 * self.iter) ** (-0.75))
             )
         self.iter += 1
     def refresh(self):
@@ -139,6 +138,7 @@ def main(args):
             # writer.add_scalar('Acc/s_acc.', s_acc, i)
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
+
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
