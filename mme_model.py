@@ -44,6 +44,8 @@ class ResClassifier(nn.Module):
         x = F.normalize(x)
         x_out = self.fc2(x) / self.temp
         return x_out
+    def get_features(self, x):
+        return self.fc1(x)
 
 class ResModel(nn.Module):
     def __init__(self, backbone='resnet34', hidden_dim=512, output_dim=65, temp=0.05, pre_trained=True):
@@ -64,6 +66,8 @@ class ResModel(nn.Module):
                     params += [{'params': [v], 'base_lr': lr, 'lr': lr}]
         params += [{'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}]
         return params
+    def get_features(self, x):
+        return self.c.get_features(self.f(x))
 
     def base_loss(self, x, y):
         return self.criterion(self.forward(x), y)
