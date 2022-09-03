@@ -1,8 +1,9 @@
 from xml.etree.ElementPath import xpath_tokenizer_re
 import torch
 import numpy as np
+import torch.nn as nn
 
-def evaluation(loader, *models):
+def evaluation(loader, model):
     model.eval()
     criterion = nn.CrossEntropyLoss()
     acc, cnt, loss = 0, 0, 0
