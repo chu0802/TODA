@@ -66,7 +66,7 @@ class LR_Scheduler(object):
             self.current_lr = param_group['lr'] = (
                 self.final_lr + 0.5 * (base - self.final_lr)*(1 + np.cos(np.pi * self.iter/self.num_iters))
                 if self.final_lr
-                else base * ((1 + 10 * self.iter / self.num_iters) ** (-0.75))
+                else base * ((1 + 0.0001 * self.iter) ** (-0.75))
 #                 else base * ((1 + 0.0001 * self.iter) ** (-0.75))
             )
         self.iter += 1
@@ -115,20 +115,20 @@ def main(args):
     for i in range(1, args.num_iters+1):
         opt.zero_grad()
 
-        if args.method == 'base':
-            sx, sy1 = next(s_iter)
-            sx, sy1 = sx.float().cuda(), sy1.long().cuda()
-            s_loss = model.base_loss(sx, sy1)
+        sx, sy = next(s_iter)
+        sx, sy = sx.float().cuda(), sy.long().cuda()
+        # s_loss = model.base_loss(sx, sy)
 
-        lx, ly = next(l_iter)
-        lx, ly = lx.float().cuda(), ly.long().cuda()
+        tx, ty = next(l_iter)
+        tx, ty = tx.float().cuda(), ty.long().cuda()
 
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
-
-        t_loss = model.base_loss(lx, ly)
-        loss = (s_loss + t_loss)/2
-
+        lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
+        loss = model.base_loss(lx, ly)
+        # t_loss = model.base_loss(lx, ly)
+        # loss = (s_loss + t_loss)/2
+        
         loss.backward()
         opt.step()
         lr_scheduler.step()
@@ -148,7 +148,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]

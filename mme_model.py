@@ -55,11 +55,16 @@ class ResModel(nn.Module):
     def forward(self, x, reverse=False):
         return self.c(self.f(x), reverse)
     def get_params(self, lr):
-        return [
-            {'params': self.f.parameters(), 'base_lr': lr*0.1, 'lr': lr*0.1},
-            {'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}
-        ]
-        
+        params = []
+        for k, v in dict(self.f.named_parameters()).items():
+            if v.requires_grad:
+                if 'classifier' not in k:
+                    params += [{'params': [v], 'base_lr': lr*0.1, 'lr': lr*0.1}]
+                else:
+                    params += [{'params': [v], 'base_lr': lr, 'lr': lr}]
+        params += [{'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}]
+        return params
+
     def base_loss(self, x, y):
         return self.criterion(self.forward(x), y)
 
