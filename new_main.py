@@ -89,12 +89,7 @@ def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
 
-    if args.method == 'targetRP' or args.method == 'initTargetRP' or args.method == 'MPD':
-        model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
-        load(args.mdh.gh.getModelPath(args.init), model=model)
-        model.cuda()
-    else:
-        model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
+    model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
