@@ -33,17 +33,16 @@ def arguments_parsing():
     # training settings
     p.add('--seed', type=int, default=2020)
     p.add('--bsize', type=int, default=24)
-    p.add('--num_iters', type=int, default=3000)
-    p.add('--alpha', type=float, default=0.5)
+    p.add('--num_iters', type=int, default=5000)
+    p.add('--alpha', type=float, default=0.8)
 
     p.add('--eval_interval', type=int, default=500)
-    p.add('--update_interval', type=int, default=10)
     p.add('--log_interval', type=int, default=100)
     # configurations
     p.add('--dataset_cfg', type=literal_eval)
     
     # optimizer
-    p.add('--lr', type=float, default=1e-2)
+    p.add('--lr', type=float, default=0.01)
     p.add('--momentum', type=float, default=0.9)
     p.add('--weight_decay', type=float, default=5e-4)
     p.add('--T', type=float, default=0.05)
@@ -119,6 +118,7 @@ def main(args):
 
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
+
         lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
         loss = model.base_loss(lx, ly)
         # t_loss = model.base_loss(lx, ly)

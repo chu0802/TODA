@@ -15,7 +15,7 @@ def evaluation(loader, model):
             acc += (pred == y).float().sum().item()
             cnt += len(x)
             loss += criterion(out, y).item()
-    return loss / cnt, 100 * acc / cnt
+    return 100 * acc / cnt
 
 def get_features(loader, model):
     model.eval()

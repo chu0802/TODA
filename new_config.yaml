@@ -3,15 +3,15 @@ target: 1
 
 # training settings
 seed: 2020
-bsize: 32
+bsize: 24
 num_iters: 5000
 eval_interval: 500
 
 alpha: 0.8
-T: 1.0
+T: 0.05
 
 # optimizer
-lr: 0.1
+lr: 0.01
 momentum: 0.9
 weight_decay: 0.0005
 
