@@ -3,20 +3,18 @@ import torch
 import numpy as np
 
 def evaluation(loader, *models):
-    for m in models:
-        m.eval()
-    pred, true = [], []
+    model.eval()
+    criterion = nn.CrossEntropyLoss()
+    acc, cnt, loss = 0, 0, 0
     with torch.no_grad():
         for x, y in loader:
-            x, y = x.cuda().float(), y.cuda().long()
-            true.append(y)
-            for m in models:
-                x = m(x)
-            pred.append(x.argmax(dim=1, keepdim=True))
-            
-    pred, true = torch.cat(pred).flatten(), torch.cat(true).flatten()
-    acc = (pred == true).float().mean()
-    return acc.item()
+            x, y = x.float().cuda(), y.long().cuda()
+            out = model(x)
+            pred = out.argmax(dim=1)
+            acc += (pred == y).float().sum().item()
+            cnt += len(x)
+            loss += criterion(out, y).item()
+    return loss / cnt, 100 * acc / cnt
 
 def get_features(loader, model):
     model.eval()
