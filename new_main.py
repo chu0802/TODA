@@ -135,8 +135,8 @@ def main(args):
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
-            writer.add_scalar('Loss/s_loss', s_loss.item(), i)
-            writer.add_scalar('Loss/t_loss', t_loss.item(), i)
+            writer.add_scalar('Loss/loss', loss.item(), i)
+            # writer.add_scalar('Loss/t_loss', t_loss.item(), i)
 
         if i % args.eval_interval == 0:
             s_acc = evaluation(s_test_loader, model)

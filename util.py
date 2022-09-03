@@ -23,7 +23,7 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.benchmark = False
 
 class model_handler:
     def __init__(self, model_dir, hash_table_name, title=None):
