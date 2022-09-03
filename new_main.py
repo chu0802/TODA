@@ -111,7 +111,7 @@ def main(args):
 
         sx, sy = next(s_iter)
         sx, sy = sx.float().cuda(), sy.long().cuda()
-        # s_loss = model.base_loss(sx, sy)
+        s_loss = model.base_loss(sx, sy)
 
         tx, ty = next(l_iter)
         tx, ty = tx.float().cuda(), ty.long().cuda()
@@ -120,9 +120,9 @@ def main(args):
         ux = ux.float().cuda()
 
         lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
-        loss = model.base_loss(lx, ly)
-        # t_loss = model.base_loss(lx, ly)
-        # loss = (s_loss + t_loss)/2
+        t_loss = model.base_loss(lx, ly)
+
+        loss = (s_loss + t_loss)/2
         
         loss.backward()
         opt.step()
@@ -130,14 +130,13 @@ def main(args):
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
-            writer.add_scalar('Loss/loss', loss.item(), i)
-            # writer.add_scalar('Loss/t_loss', t_loss.item(), i)
+            writer.add_scalar('Loss/s_loss', s_loss.item(), i)
+            writer.add_scalar('Loss/t_loss', t_loss.item(), i)
 
         if i % args.eval_interval == 0:
-            s_acc = evaluation(s_test_loader, model)
+            # s_acc = evaluation(s_test_loader, model)
             t_acc = evaluation(t_unlabeled_test_loader, model)
-            
-            writer.add_scalar('Acc/s_acc.', s_acc, i)
+            # writer.add_scalar('Acc/s_acc.', s_acc, i)
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
     save(args.mdh.getModelPath(), model=model)
