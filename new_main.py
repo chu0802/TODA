@@ -119,8 +119,8 @@ def main(args):
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
-        lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
-        t_loss = model.base_loss(lx, ly)
+        # lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
+        t_loss = model.base_loss(tx, ty)
 
         loss = (s_loss + t_loss)/2
         
