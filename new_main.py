@@ -35,6 +35,7 @@ def arguments_parsing():
     p.add('--bsize', type=int, default=24)
     p.add('--num_iters', type=int, default=5000)
     p.add('--alpha', type=float, default=0.8)
+    p.add('--lamda', type=float, default=0.1)
 
     p.add('--eval_interval', type=int, default=500)
     p.add('--log_interval', type=int, default=100)
@@ -125,12 +126,21 @@ def main(args):
         
         loss.backward()
         opt.step()
+
+        if args.method == 'MME':
+            opt.zero_grad()
+            u_loss = model.mme_loss(ux, args.lamda)
+            u_loss.backward()
+            opt.step()
+
         lr_scheduler.step()
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
             writer.add_scalar('Loss/s_loss', s_loss.item(), i)
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
+            if args.method == 'MME':
+                writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
 
         if i % args.eval_interval == 0:
             # s_acc = evaluation(s_test_loader, model)
@@ -142,7 +152,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]

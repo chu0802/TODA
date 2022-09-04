@@ -11,25 +11,20 @@ import torch.nn.utils.weight_norm as weightNorm
 
 import numpy as np
 
-# +
-class RevGrad(Function):
+class GradReverse(Function):
     @staticmethod
-    def forward(ctx, input_, alpha_=1.0):
-        ctx.save_for_backward(input_)
-        output = input_
-        return output
+    def forward(ctx, x, lambd):
+        ctx.lambd = lambd
+        return x.view_as(x)
 
     @staticmethod
-    def backward(ctx, grad_output):  # pragma: no cover
-        grad_input = None
-        if ctx.needs_input_grad[0]:
-            grad_input = -grad_output
-        return grad_input, None
+    def backward(ctx, grad_output):
+        output = grad_output.neg() * ctx.lambd
+        return output, None
 
-grad_reverse = RevGrad.apply
+def grad_reverse(x, lambd=1.0):
+    return GradReverse.apply(x, lambd)
 
-
-# -
 
 def get_optimizer(model, weight_decay, lr, momentum):
     params = model.get_parameters(init_lr=1.0)
@@ -149,12 +144,21 @@ class ResModel(nn.Module):
     def get_features(self, x):
         return self.b(self.f(x))
 
-    def forward(self, x):
-        return self.c(self.b(self.f(x)))
+    def forward(self, x, reverse=False):
+        f = self.get_features(x)
+        if reverse:
+            f = grad_reverse(f)
+        return self.c(f)
 
     def base_loss(self, x, y):
         out = self.forward(x)
         return self.criterion(out, y)
+        
+    def mme_loss(self, x, lamda=0.1):
+        out = self.forward(x, reverse=True)
+        out = F.softmax(out, dim=1)
+        adent = lamda * torch.mean(torch.sum(out * (torch.log(out + 1e-10)), dim=1))
+        return adent
 
     def lc_loss(self, x, y1, y2, alpha):
         out = self.forward(x)
