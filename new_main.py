@@ -123,7 +123,7 @@ def main(args):
         init_model.cuda()
 
         LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
-        LABEL = label.argmax(dim=1)
+        LABEL = LABEL.argmax(dim=1)
 
         ppc = getPPC(args, model, label, s_test_loader, t_unlabeled_test_loader)
         

@@ -118,8 +118,8 @@ class torch_prototypical_classifier(nn.Module):
     def update_center(self, c):
         self.center = c
         self.center.require_grad = False
-        
-    @torch.no_grad
+
+    @torch.no_grad()
     def forward(self, x, T=1.0):
         dist = torch.cdist(x, self.center)
         return F.softmax(-dist*T, dim=1)
