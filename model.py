@@ -141,19 +141,17 @@ class ResModel(nn.Module):
             {'params': self.b.parameters(), 'base_lr': lr, 'lr': lr},
             {'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}
         ]
-    def get_features(self, x):
-        return self.b(self.f(x))
+    def get_features(self, x, reverse=False):
+        return self.b(self.f(x), reverse=reverse)
 
     def forward(self, x, reverse=False):
-        f = self.get_features(x)
-        if reverse:
-            f = grad_reverse(f)
+        f = self.get_features(x, reverse=reverse)
         return self.c(f)
 
     def base_loss(self, x, y):
         out = self.forward(x)
         return self.criterion(out, y)
-        
+
     def mme_loss(self, x, lamda=0.1):
         out = self.forward(x, reverse=True)
         out = F.softmax(out, dim=1)
@@ -224,7 +222,6 @@ class BottleNeck(nn.Module):
         x = self.bottleneck(x)
         if reverse:
             x = grad_reverse(x)
-        # return F.normalize(x)
         return self.bn(x)
 
 class Classifier(nn.Module):
