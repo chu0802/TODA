@@ -86,29 +86,23 @@ def load(path, **models):
     for m, v in models.items():
         v.load_state_dict(state_dict[m])
 
-def getPPCLoader(args, model, s_loader, t_loader):
-    model_path = args.mdh.gh.getModelPath(args.init)
-
-    init_model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
-    load(model_path, model=init_model)
-    init_model.cuda()
-
-    pred, _ = get_prediction(t_loader, init_model)
+def getPPC(args, model, label, s_loader, t_loader):
     _, t_feat = get_prediction(t_loader, model)
     _, s_feat = get_prediction(s_loader, model)
 
-    pred = pred.argmax(dim=1)
-    centers = torch.vstack([t_feat[pred == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+    centers = torch.vstack([t_feat[label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
 
     ppc = torch_prototypical_classifier(centers)
 
-    soft_labels = ppc(s_feat, args.T).detach().cpu().numpy()
+    return ppc
 
-    root, s_name = Path(args.dataset['path']), args.dataset['domains'][args.source]
-    s_train_set = LabelCorrectionImageList(root, root / f'{s_name}_list.txt', TransformNormal(train=True), soft_labels)
-    s_train_loader = load_img_dloader(args, s_train_set, train=True)
+    # soft_labels = ppc(s_feat, args.T).detach().cpu().numpy()
 
-    return s_train_loader
+    # root, s_name = Path(args.dataset['path']), args.dataset['domains'][args.source]
+    # s_train_set = LabelCorrectionImageList(root, root / f'{s_name}_list.txt', TransformNormal(train=True), soft_labels)
+    # s_train_loader = load_img_dloader(args, s_train_set, train=True)
+
+    # return s_train_loader
 
 def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
@@ -121,8 +115,19 @@ def main(args):
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
     if 'LC' in args.method:
-        _, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
-        s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+        s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+
+        model_path = args.mdh.gh.getModelPath(args.init)
+        init_model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
+        load(model_path, model=init_model)
+        init_model.cuda()
+
+        LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
+        LABEL = label.argmax(dim=1)
+
+        ppc = getPPC(args, model, label, s_test_loader, t_unlabeled_test_loader)
+        
+        # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
     else:
         s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
 
@@ -145,13 +150,17 @@ def main(args):
             sx, sy = sx.float().cuda(), sy.long().cuda()
             s_loss = model.base_loss(sx, sy)
         elif 'LC' in args.method:
-            sx, sy, sy2 = next(s_iter)
-            sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
+            sx, sy = next(s_iter)
+            sx, sy = sx.float().cuda(), sy.long().cuda()
+            sy2 = ppc(sx.detach(), args.T)
             s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
+            # sx, sy, sy2 = next(s_iter)
+            # sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
+            # s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
         elif 'NL' in args.method:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            sy2 = F.softmax(model(sx) * args.T).detach()
+            sy2 = F.softmax(model(sx) * args.T, dim=1).detach()
             s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
 
         tx, ty = next(l_iter)
@@ -189,9 +198,10 @@ def main(args):
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
         if i % args.update_interval == 0 and 'LCD' in args.method:
-            s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
-            s_iter = iter(s_train_loader)
-            next(islice(s_iter, i, None))
+            ppc = getPPC(args, model, LABEL, s_test_loader, t_unlabeled_test_loader)
+            # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+            # s_iter = iter(s_train_loader)
+            # next(islice(s_iter, i, None))
             model.train()
 
     save(args.mdh.getModelPath(), model=model)
