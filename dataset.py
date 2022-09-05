@@ -96,6 +96,13 @@ class ImageList(Dataset):
         path, label = self.imgs[idx]
         return self.transform(self.loader(path)), label
 
+class LabelCorrectionImageList(ImageList):
+    def __init__(self, root, idx_path, transform, target):
+        super().__init__(root, idx_path, transform)
+        self.target = target
+    def __getitem__(self, idx):
+        path, label = self.imgs[idx]
+        return self.transform(self.loader(path)), label, self.target[idx]
 
 class CustomSubset(Dataset):
     def __init__(self, dset, idx, transform=None):
