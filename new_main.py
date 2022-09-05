@@ -174,7 +174,7 @@ def main(args):
 
         t_loss = model.base_loss(tx, ty)
 
-        loss = beta * s_loss + (1-beta) * t_loss
+        loss = args.beta * s_loss + (1-args.beta) * t_loss
         
         loss.backward()
         opt.step()
