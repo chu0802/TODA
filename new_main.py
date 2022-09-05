@@ -8,6 +8,7 @@ from ast import literal_eval
 
 import numpy as np
 from scipy.special import softmax
+from itertools import islice
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -39,6 +40,7 @@ def arguments_parsing():
 
     p.add('--eval_interval', type=int, default=500)
     p.add('--log_interval', type=int, default=100)
+    p.add('--update_interval', type=int, default=500)
     # configurations
     p.add('--dataset_cfg', type=literal_eval)
     
@@ -181,11 +183,15 @@ def main(args):
             # writer.add_scalar('Acc/s_acc.', s_acc, i)
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
+        if i % args.update_interval == 0 and 'LCD' in args.method:
+            s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+            s_iter = iter(s_train_loader)
+            next(islice(s_iter, i, None))
 
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda', 'update_interval'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
