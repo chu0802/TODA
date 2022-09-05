@@ -125,7 +125,7 @@ def main(args):
         LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
         LABEL = LABEL.argmax(dim=1)
 
-        ppc = getPPC(args, model, label, s_test_loader, t_unlabeled_test_loader)
+        ppc = getPPC(args, model, LABEL, s_test_loader, t_unlabeled_test_loader)
         
         # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
     else:
@@ -152,8 +152,10 @@ def main(args):
         elif 'LC' in args.method:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
-            sy2 = ppc(sx.detach(), args.T)
-            s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
+
+            sf = model.get_features(sx)
+            sy2 = ppc(sf.detach(), args.T)
+            s_loss = model.lc_loss(sf, sy, sy2, args.alpha)
             # sx, sy, sy2 = next(s_iter)
             # sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
             # s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
