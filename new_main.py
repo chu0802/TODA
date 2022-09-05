@@ -36,6 +36,7 @@ def arguments_parsing():
     p.add('--bsize', type=int, default=24)
     p.add('--num_iters', type=int, default=5000)
     p.add('--alpha', type=float, default=0.8)
+    p.add('--beta', type=float, default=0.5)
     p.add('--lamda', type=float, default=0.1)
 
     p.add('--eval_interval', type=int, default=500)
@@ -173,7 +174,7 @@ def main(args):
 
         t_loss = model.base_loss(tx, ty)
 
-        loss = (s_loss + t_loss)/2
+        loss = beta * s_loss + (1-beta) * t_loss
         
         loss.backward()
         opt.step()
