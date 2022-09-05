@@ -113,7 +113,7 @@ class torch_prototypical_classifier(nn.Module):
     def __init__(self, center=None):
         super(torch_prototypical_classifier, self).__init__()
         self.center = None
-        if center:
+        if center is not None:
             self.update_center(center)
     def update_center(self, c):
         self.center = c

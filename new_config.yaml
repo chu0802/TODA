@@ -8,7 +8,7 @@ num_iters: 5000
 eval_interval: 500
 
 alpha: 0.8
-T: 0.05
+T: 0.4
 
 # optimizer
 lr: 0.01

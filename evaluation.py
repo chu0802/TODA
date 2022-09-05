@@ -26,15 +26,16 @@ def get_features(loader, model):
             x = model.get_features(x)
             features.append(x.detach().cpu().numpy())
     return np.vstack(features)
-def get_predictions(loader, model):
+
+def get_prediction(loader, model):
     model.eval()
-    pred = []
+    P, F = [], []
     with torch.no_grad():
         for x, _ in loader:
             x = x.cuda().float()
-            x = model(x)
-            pred.append(x.detach().cpu().numpy())
-    return np.vstack(pred)
+            F.append(model.get_features(x))
+            P.append(model.c(F[-1]))
+    return torch.vstack(P), torch.vstack(F)
 
 # def get_features(loader, *models):
 #     for m in models:

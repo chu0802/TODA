@@ -15,8 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 # from mme_model import ResModel
 from model import ResModel, prototypical_classifier, torch_prototypical_classifier
 from util import set_seed
-from dataset import get_loaders, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
-from evaluation import evaluation, get_features, get_predictions
+from dataset import get_loaders, LabelCorrectionImageList, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
+from evaluation import evaluation, get_features, get_prediction
 from mdh import ModelHandler
 
 def arguments_parsing():
@@ -46,7 +46,7 @@ def arguments_parsing():
     p.add('--lr', type=float, default=0.01)
     p.add('--momentum', type=float, default=0.9)
     p.add('--weight_decay', type=float, default=5e-4)
-    p.add('--T', type=float, default=0.05)
+    p.add('--T', type=float, default=0.4)
     p.add('--note', type=str, default='')
 
     p.add('--init', type=str, default='')
@@ -84,6 +84,30 @@ def load(path, **models):
     for m, v in models.items():
         v.load_state_dict(state_dict[m])
 
+def getPPCLoader(args, model, s_loader, t_loader):
+    model_path = args.mdh.gh.getModelPath(args.init)
+
+    init_model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
+    load(model_path, model=init_model)
+    init_model.cuda()
+
+    pred, _ = get_prediction(t_loader, init_model)
+    _, t_feat = get_prediction(t_loader, model)
+    _, s_feat = get_prediction(s_loader, model)
+
+    pred = pred.argmax(dim=1)
+    centers = torch.vstack([t_feat[pred == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+
+    ppc = torch_prototypical_classifier(centers)
+
+    soft_labels = ppc(s_feat, args.T).detach().cpu().numpy()
+
+    root, s_name = Path(args.dataset['path']), args.dataset['domains'][args.source]
+    s_train_set = LabelCorrectionImageList(root, root / f'{s_name}_list.txt', TransformNormal(train=True), soft_labels)
+    s_train_loader = load_img_dloader(args, s_train_set, train=True)
+
+    return s_train_loader
+
 def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
@@ -94,7 +118,12 @@ def main(args):
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
-    s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+    if 'LC' in args.method:
+        _, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+        s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+    else:
+        s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+
     torch.cuda.empty_cache()
 
     s_iter = iter(s_train_loader)
@@ -109,9 +138,14 @@ def main(args):
     for i in range(1, args.num_iters+1):
         opt.zero_grad()
 
-        sx, sy = next(s_iter)
-        sx, sy = sx.float().cuda(), sy.long().cuda()
-        s_loss = model.base_loss(sx, sy)
+        if args.method == 'base':
+            sx, sy = next(s_iter)
+            sx, sy = sx.float().cuda(), sy.long().cuda()
+            s_loss = model.base_loss(sx, sy)
+        elif 'LC' in args.method:
+            sx, sy, sy2 = next(s_iter)
+            sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
+            s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
 
         tx, ty = next(l_iter)
         tx, ty = tx.float().cuda(), ty.long().cuda()
@@ -119,7 +153,6 @@ def main(args):
         ux, _ = next(u_iter)
         ux = ux.float().cuda()
 
-        # lx, ly = torch.cat((sx, tx), dim=0), torch.cat((sy, ty), dim=0)
         t_loss = model.base_loss(tx, ty)
 
         loss = (s_loss + t_loss)/2
@@ -127,7 +160,7 @@ def main(args):
         loss.backward()
         opt.step()
 
-        if args.method == 'MME':
+        if 'MME' in args.method:
             opt.zero_grad()
             u_loss = model.mme_loss(ux, args.lamda)
             u_loss.backward()
@@ -139,7 +172,7 @@ def main(args):
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
             writer.add_scalar('Loss/s_loss', s_loss.item(), i)
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
-            if args.method == 'MME':
+            if 'MME' in args.method:
                 writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
 
         if i % args.eval_interval == 0:
