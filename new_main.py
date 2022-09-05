@@ -40,7 +40,7 @@ def arguments_parsing():
 
     p.add('--eval_interval', type=int, default=500)
     p.add('--log_interval', type=int, default=100)
-    p.add('--update_interval', type=int, default=500)
+    p.add('--update_interval', type=int, default=100)
     # configurations
     p.add('--dataset_cfg', type=literal_eval)
     
@@ -148,6 +148,11 @@ def main(args):
             sx, sy, sy2 = next(s_iter)
             sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
             s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
+        elif 'NL' in args.method:
+            sx, sy = next(s_iter)
+            sx, sy = sx.float().cuda(), sy.long().cuda()
+            sy2 = F.softmax(model(sx) * args.T).detach()
+            s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
 
         tx, ty = next(l_iter)
         tx, ty = tx.float().cuda(), ty.long().cuda()
@@ -187,6 +192,7 @@ def main(args):
             s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
             s_iter = iter(s_train_loader)
             next(islice(s_iter, i, None))
+            model.train()
 
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
