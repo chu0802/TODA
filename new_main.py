@@ -210,7 +210,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda', 'update_interval'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda', 'update_interval', 'beta'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
