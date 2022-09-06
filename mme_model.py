@@ -35,7 +35,7 @@ class ResClassifier(nn.Module):
     def __init__(self, inc=4096, hidden_dim=512, num_class=65, temp=0.05):
         super(ResClassifier, self).__init__()
         self.fc1 = nn.Linear(inc, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, num_class, bias=False)
+        self.fc2 = nn.utils.weight_norm(nn.Linear(hidden_dim, num_class, bias=False))
         self.temp = temp
     def forward(self, x, reverse=False):
         x = self.get_features(x, reverse=reverse)
@@ -44,9 +44,9 @@ class ResClassifier(nn.Module):
         x = self.fc1(x)
         if reverse:
             x = grad_reverse(x)
-        return F.normalize(x)
+        return F.normalize(x) / self.temp
     def get_predictions(self, x):
-        return self.fc2(x) / self.temp
+        return self.fc2(x)
 
 class ResModel(nn.Module):
     def __init__(self, backbone='resnet34', hidden_dim=512, output_dim=65, temp=0.05, pre_trained=True):
