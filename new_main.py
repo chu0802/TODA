@@ -146,11 +146,7 @@ def main(args):
     for i in range(1, args.num_iters+1):
         opt.zero_grad()
 
-        if args.method == 'base':
-            sx, sy = next(s_iter)
-            sx, sy = sx.float().cuda(), sy.long().cuda()
-            s_loss = model.base_loss(sx, sy)
-        elif 'LC' in args.method:
+        if 'LC' in args.method:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
 
@@ -160,6 +156,10 @@ def main(args):
             # sx, sy, sy2 = next(s_iter)
             # sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
             # s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
+        else:
+            sx, sy = next(s_iter)
+            sx, sy = sx.float().cuda(), sy.long().cuda()
+            s_loss = model.base_loss(sx, sy)
 
         tx, ty = next(l_iter)
         tx, ty = tx.float().cuda(), ty.long().cuda()
