@@ -163,7 +163,7 @@ class ResModel(nn.Module):
         adent = lamda * torch.mean(torch.sum(out * (torch.log(out + 1e-10)), dim=1))
         return adent
     def lc_loss(self, f, y1, y2, alpha):
-        out = self.c(f)
+        out = self.get_predictions(f)
         log_softmax_out = F.log_softmax(out, dim=1)
         l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
         soft_loss = -(y2 * log_softmax_out).sum(axis=1)

@@ -75,6 +75,14 @@ class ResModel(nn.Module):
 
     def base_loss(self, x, y):
         return self.criterion(self.forward(x), y)
+    
+    def lc_loss(self, f, y1, y2, alpha):
+        out = self.get_predictions(f)
+        log_softmax_out = F.log_softmax(out, dim=1)
+        l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
+        soft_loss = -(y2 * log_softmax_out).sum(axis=1)
+        return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+
 
     def mme_loss(self, x, lamda=0.1):
         out = self.forward(x, reverse=True)
