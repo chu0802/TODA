@@ -69,6 +69,9 @@ class ResModel(nn.Module):
         return params
     def get_features(self, x):
         return self.c.get_features(self.f(x))
+    
+    def get_predictions(self, x):
+        return self.c.get_predictions(x)
 
     def base_loss(self, x, y):
         return self.criterion(self.forward(x), y)

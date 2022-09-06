@@ -146,9 +146,12 @@ class ResModel(nn.Module):
     def get_features(self, x, reverse=False):
         return self.b(self.f(x), reverse=reverse)
 
+    def get_predictions(self, x):
+        return self.c(x)
+
     def forward(self, x, reverse=False):
         f = self.get_features(x, reverse=reverse)
-        return self.c(f)
+        return self.get_predictions(f)
 
     def base_loss(self, x, y):
         out = self.forward(x)
