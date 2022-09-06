@@ -33,7 +33,7 @@ def get_prediction(loader, model):
     with torch.no_grad():
         for x, _ in loader:
             x = x.cuda().float()
-            F.append(model.get_features(x, normalize=False))
+            F.append(model.get_features(x))
             P.append(model.get_predictions(F[-1]))
     return torch.vstack(P), torch.vstack(F)
 
