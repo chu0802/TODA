@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 from mme_model import ResModel
-# from model import ResModel, prototypical_classifier, torch_prototypical_classifier
+from model import torch_prototypical_classifier
 from util import set_seed
 from dataset import get_loaders, LabelCorrectionImageList, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_prediction
@@ -50,6 +50,7 @@ def arguments_parsing():
     p.add('--momentum', type=float, default=0.9)
     p.add('--weight_decay', type=float, default=5e-4)
     p.add('--T', type=float, default=0.4)
+    p.add('--temp', type=float, default=0.05)
     p.add('--note', type=str, default='')
 
     p.add('--init', type=str, default='')
@@ -109,7 +110,7 @@ def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
 
-    model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
+    model = ResModel('resnet34', output_dim=args.dataset['num_classes'], temp=args.temp).cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
