@@ -151,21 +151,9 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
 
-            
-            
-            out = self.forward(x)
-            l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
-
-            soft_f = model.get_features(sx, normalize=False)
-            soft_out = model.get_predictions(soft_f)
-            sy2 = ppc(soft_f.detach(), args.T)
-            log_softmax_out = F.log_softmax(soft_out, dim=1)
-            soft_loss = -(sy2 * log_softmax_out).sum(axis=1)
-            s_loss = ((1 - alpha) * l_loss + alpha * soft_loss).mean()
-
-            # sx, sy, sy2 = next(s_iter)
-            # sx, sy, sy2 = sx.float().cuda(), sy.long().cuda(), sy2.float().cuda()
-            # s_loss = model.lc_loss(sx, sy, sy2, args.alpha)
+            sf = model.get_features(sx)
+            sy2 = ppc(sf.detach(), args.T)
+            s_loss = model.lc_loss(sf, sy, sy2, args.alpha)
         else:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
