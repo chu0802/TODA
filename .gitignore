@@ -13,3 +13,4 @@ script_generator.py
 *.ipynb
 script
 notebook
+myModelLog
