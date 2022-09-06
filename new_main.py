@@ -13,8 +13,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-from mme_model import ResModel
-from model import torch_prototypical_classifier
+from model import ResModel, torch_prototypical_classifier
 from util import set_seed
 from dataset import get_loaders, LabelCorrectionImageList, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_prediction
@@ -70,7 +69,7 @@ class LR_Scheduler(object):
             self.current_lr = param_group['lr'] = (
                 self.final_lr + 0.5 * (base - self.final_lr)*(1 + np.cos(np.pi * self.iter/self.num_iters))
                 if self.final_lr
-                else base * ((1 + 0.0001 * self.iter) ** (-0.75))
+                else base * ((1 + 10 * self.iter / self.num_iters) ** (-0.75))
             )
         self.iter += 1
     def refresh(self):
@@ -110,7 +109,7 @@ def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
 
-    model = ResModel('resnet34', output_dim=args.dataset['num_classes'], temp=args.temp).cuda()
+    model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
@@ -203,7 +202,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'lamda', 'update_interval', 'beta'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
