@@ -37,16 +37,14 @@ class ResClassifier(nn.Module):
         self.fc1 = nn.Linear(inc, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, num_class, bias=False)
         self.temp = temp
-    def forward(self, x, reverse=False, normalize=True):
-        x = self.get_features(x, reverse=reverse, normalize=normalize)
+    def forward(self, x, reverse=False):
+        x = self.get_features(x, reverse=reverse)
         return self.get_predictions(x)
-    def get_features(self, x, reverse=False, normalize=True):
+    def get_features(self, x, reverse=False):
         x = self.fc1(x)
         if reverse:
             x = grad_reverse(x)
-        if normalize:
-            return F.normalize(x) / self.temp
-        return x
+        return F.normalize(x) / self.temp
     def get_predictions(self, x):
         return self.fc2(x)
 
@@ -57,8 +55,8 @@ class ResModel(nn.Module):
         self.c = ResClassifier(self.f.last_dim, hidden_dim, output_dim, temp)
         self.criterion = nn.CrossEntropyLoss()
         weights_init(self.c)
-    def forward(self, x, reverse=False, normalize=True):
-        return self.c(self.f(x), reverse, normalize=normalize)
+    def forward(self, x, reverse=False):
+        return self.c(self.f(x), reverse)
     def get_params(self, lr):
         params = []
         for k, v in dict(self.f.named_parameters()).items():
@@ -69,8 +67,8 @@ class ResModel(nn.Module):
                     params += [{'params': [v], 'base_lr': lr, 'lr': lr}]
         params += [{'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}]
         return params
-    def get_features(self, x, normalize=True):
-        return self.c.get_features(self.f(x), normalize=normalize)
+    def get_features(self, x):
+        return self.c.get_features(self.f(x))
     
     def get_predictions(self, x):
         return self.c.get_predictions(x)
@@ -78,8 +76,8 @@ class ResModel(nn.Module):
     def base_loss(self, x, y):
         return self.criterion(self.forward(x), y)
     
-    def lc_loss(self, x, y1, y2, alpha):
-        out = self.forward(x)
+    def lc_loss(self, f, y1, y2, alpha):
+        out = self.get_predictions(f)
         log_softmax_out = F.log_softmax(out, dim=1)
         l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
         soft_loss = -(y2 * log_softmax_out).sum(axis=1)
