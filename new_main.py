@@ -49,7 +49,6 @@ def arguments_parsing():
     p.add('--momentum', type=float, default=0.9)
     p.add('--weight_decay', type=float, default=5e-4)
     p.add('--T', type=float, default=0.4)
-    p.add('--temp', type=float, default=0.05)
     p.add('--note', type=str, default='')
 
     p.add('--init', type=str, default='')
