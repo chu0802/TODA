@@ -69,7 +69,7 @@ class LR_Scheduler(object):
             self.current_lr = param_group['lr'] = (
                 self.final_lr + 0.5 * (base - self.final_lr)*(1 + np.cos(np.pi * self.iter/self.num_iters))
                 if self.final_lr
-                else base * ((1 + 10 * self.iter / self.num_iters) ** (-0.75))
+                else base * ((1 + 0.0001 * self.iter) ** (-0.75))
             )
         self.iter += 1
     def refresh(self):
@@ -202,7 +202,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
