@@ -1,14 +1,7 @@
-source: 0
-target: 1
 
-# training settings
-seed: 2020
 bsize: 24
 num_iters: 5000
 eval_interval: 500
-
-alpha: 0.8
-T: 0.4
 
 # optimizer
 lr: 0.01
