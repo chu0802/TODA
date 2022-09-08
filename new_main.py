@@ -13,7 +13,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
-from model import ResModel, torch_prototypical_classifier
+from mme_model import ResModel
+from model import torch_prototypical_classifier
 from util import set_seed
 from dataset import get_loaders, LabelCorrectionImageList, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_prediction

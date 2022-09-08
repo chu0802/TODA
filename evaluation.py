@@ -34,7 +34,7 @@ def get_prediction(loader, model):
         for x, _ in loader:
             x = x.cuda().float()
             F.append(model.get_features(x))
-            P.append(model.c(F[-1]))
+            P.append(model.get_predictions(F[-1]))
     return torch.vstack(P), torch.vstack(F)
 
 # def get_features(loader, *models):
