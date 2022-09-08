@@ -8,7 +8,6 @@ labels
 OfficeHome
 Office31
 res
-script_generator.py
 *.sh
 *.ipynb
 script
