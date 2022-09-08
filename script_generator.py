@@ -14,7 +14,7 @@ seed_list = rng.integers(1e4, size=12)
 
 args = Namespace()
 args.num_iters = 5000
-args.method = 'MME_LCD_PPC'
+args.method = 'MME'
 args.alpha = 0.3
 args.T = 0.6
 args.lr = 0.01
