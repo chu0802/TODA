@@ -109,6 +109,7 @@ def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
 
+    model_path = args.mdh.gh.getModelPath(args.init)
     model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
     load(model_path, model=model)
     model.cuda()
