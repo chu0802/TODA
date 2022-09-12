@@ -157,7 +157,7 @@ def main(args):
             sf = model.get_features(sx)
             sy2 = ppc(sf.detach(), args.T)
             l_loss, soft_loss = model.lc_loss(sf, sy, sy2, args.alpha)
-            s_loss = ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+            s_loss = ((1 - args.alpha) * l_loss + args.alpha * soft_loss).mean()
         else:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
