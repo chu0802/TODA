@@ -167,7 +167,8 @@ class ResModel(nn.Module):
         log_softmax_out = F.log_softmax(out, dim=1)
         l_loss = nn.CrossEntropyLoss(reduction='none')(out, y1)
         soft_loss = -(y2 * log_softmax_out).sum(axis=1)
-        return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
+        return l_loss, soft_loss
+        # return ((1 - alpha) * l_loss + alpha * soft_loss).mean()
 
 
 class ResExtractor(nn.Module):

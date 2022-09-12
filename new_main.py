@@ -155,7 +155,8 @@ def main(args):
 
             sf = model.get_features(sx)
             sy2 = ppc(sf.detach(), args.T)
-            s_loss = model.lc_loss(sf, sy, sy2, args.alpha)
+            l_loss, soft_loss = model.lc_loss(sf, sy, sy2, args.alpha)
+            s_loss = ((1 - alpha) * l_loss + alpha * soft_loss).mean()
         else:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -184,7 +185,9 @@ def main(args):
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
-            writer.add_scalar('Loss/s_loss', s_loss.item(), i)
+            writer.add_scalar('Loss/l_loss', l_loss.mean().item(), i)
+            writer.add_scalar('Loss/soft_loss', soft_loss.mean().item(), i)
+            # writer.add_scalar('Loss/s_loss', s_loss.item(), i)
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
             if 'MME' in args.method:
                 writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
