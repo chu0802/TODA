@@ -109,10 +109,11 @@ def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
     set_seed(args.seed)
 
-    model_path = args.mdh.gh.getModelPath(args.init)
-    model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
-    load(model_path, model=model)
-    model.cuda()
+    model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
+    # model_path = args.mdh.gh.getModelPath(args.init)
+    # model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
+    # load(model_path, model=model)
+    # model.cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
