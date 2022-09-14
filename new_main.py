@@ -161,7 +161,7 @@ def main(args):
             sy2 = model(sx).detach()
             out = model(sx)
             log_softmax_out = F.log_softmax(out, dim=1)
-            l_loss = nn.CrossEntropyLoss(reduction='none')(out, sy)
+            l_loss = torch.nn.CrossEntropyLoss(reduction='none')(out, sy)
             soft_loss = -(sy2 * log_softmax_out).sum(dim=1)
             s_loss = ((1 - args.alpha) * l_loss + args.alpha * soft_loss).mean()
         else:
