@@ -42,6 +42,7 @@ def arguments_parsing():
     p.add('--eval_interval', type=int, default=500)
     p.add('--log_interval', type=int, default=100)
     p.add('--update_interval', type=int, default=100)
+    p.add('--label_update_interval', type=int, default=0)
     # configurations
     p.add('--dataset_cfg', type=literal_eval)
     
@@ -158,7 +159,7 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
 
-            sy2 = model(sx).detach()
+            sy2 = F.softmax(model(sx).detach() * args.T)
             out = model(sx)
             log_softmax_out = F.log_softmax(out, dim=1)
             l_loss = torch.nn.CrossEntropyLoss(reduction='none')(out, sy)
@@ -209,11 +210,14 @@ def main(args):
             # s_iter = iter(s_train_loader)
             # next(islice(s_iter, i, None))
             model.train()
+        if args.label_update_interval > 0 and i % args.label_update_interval == 0 and 'LCD' in args.method:
+            LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
+            LABEL = LABEL.argmax(dim=1)
 
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr', 'label_update_interval'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
