@@ -211,8 +211,9 @@ def main(args):
             # next(islice(s_iter, i, None))
             model.train()
         if args.label_update_interval > 0 and i % args.label_update_interval == 0 and 'LCD' in args.method:
-            LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
+            LABEL, _ = get_prediction(t_unlabeled_test_loader, model)
             LABEL = LABEL.argmax(dim=1)
+            model.train()
 
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
