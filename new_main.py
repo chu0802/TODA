@@ -159,7 +159,7 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
 
-            sy2 = F.softmax(model(sx).detach() * args.T)
+            sy2 = F.softmax(model(sx).detach() * args.T, dim=1)
             out = model(sx)
             log_softmax_out = F.log_softmax(out, dim=1)
             l_loss = torch.nn.CrossEntropyLoss(reduction='none')(out, sy)
