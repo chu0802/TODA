@@ -110,10 +110,6 @@ def main(args):
     set_seed(args.seed)
 
     model = ResModel('resnet34', output_dim=args.dataset['num_classes']).cuda()
-    # model_path = args.mdh.gh.getModelPath(args.init)
-    # model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
-    # load(model_path, model=model)
-    # model.cuda()
 
     params = model.get_params(args.lr)
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
@@ -158,6 +154,16 @@ def main(args):
             sy2 = ppc(sf.detach(), args.T)
             l_loss, soft_loss = model.lc_loss(sf, sy, sy2, args.alpha)
             s_loss = ((1 - args.alpha) * l_loss + args.alpha * soft_loss).mean()
+        elif 'NL' in args.method:
+            sx, sy = next(s_iter)
+            sx, sy = sx.float().cuda(), sy.long().cuda()
+
+            sy2 = model(sx).detach()
+            out = model(sx)
+            log_softmax_out = F.log_softmax(out, dim=1)
+            l_loss = nn.CrossEntropyLoss(reduction='none')(out, sy)
+            soft_loss = -(sy2 * log_softmax_out).sum(dim=1)
+            s_loss = ((1 - args.alpha) * l_loss + args.alpha * soft_loss).mean()
         else:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -186,9 +192,7 @@ def main(args):
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
-            writer.add_scalar('Loss/l_loss', l_loss.mean().item(), i)
-            writer.add_scalar('Loss/soft_loss', soft_loss.mean().item(), i)
-            # writer.add_scalar('Loss/s_loss', s_loss.item(), i)
+            writer.add_scalar('Loss/s_loss', s_loss.item(), i)
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
             if 'MME' in args.method:
                 writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
