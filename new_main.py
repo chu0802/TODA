@@ -167,7 +167,7 @@ def main(args):
             model.eval()
             with torch.no_grad():
                 uf = model.get_features(ux)
-                up = model.get_predictions(uf)
+                up = model.get_predictions(uf).argmax(dim=1)
 
                 uc = torch.stack([uf[up==i].mean(dim=0) for i in range(args.dataset['num_classes'])])
                 idx = torch.unique(up)
