@@ -219,12 +219,12 @@ def main(args):
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
 
-        # if i % args.update_interval == 0 and 'LCD' in args.method:
-        #     ppc = getPPC(args, model, t_unlabeled_test_loader)
-        #     # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
-        #     # s_iter = iter(s_train_loader)
-        #     # next(islice(s_iter, i, None))
-        #     model.train()
+        if i == args.update_interval and 'LC' in args.method:
+            ppc = getPPC(args, model, t_unlabeled_test_loader)
+            # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+            # s_iter = iter(s_train_loader)
+            # next(islice(s_iter, i, None))
+            model.train()
         
 
     save(args.mdh.getModelPath(), model=model)
