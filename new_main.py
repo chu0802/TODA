@@ -149,6 +149,12 @@ def main(args):
     for i in range(1, args.num_iters+1):
         opt.zero_grad()
 
+        tx, ty = next(l_iter)
+        tx, ty = tx.float().cuda(), ty.long().cuda()
+
+        ux, _ = next(u_iter)
+        ux = ux.float().cuda()
+
         if 'LC' in args.method and i > args.update_interval:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -157,6 +163,16 @@ def main(args):
             sy2 = ppc(sf.detach(), args.T)
             l_loss, soft_loss = model.lc_loss(sf, sy, sy2, args.alpha)
             s_loss = ((1 - args.alpha) * l_loss + args.alpha * soft_loss).mean()
+
+            model.eval()
+            with torch.no_grad():
+                uf = model.get_features(ux)
+                up = model.get_predictions(uf)
+
+                uc = torch.stack([uf[up==i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+                idx = torch.unique(up)
+                ppc.update_center(uc, idx)
+            model.train()
         elif 'NL' in args.method:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
@@ -171,12 +187,6 @@ def main(args):
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
             s_loss = model.base_loss(sx, sy)
-
-        tx, ty = next(l_iter)
-        tx, ty = tx.float().cuda(), ty.long().cuda()
-
-        ux, _ = next(u_iter)
-        ux = ux.float().cuda()
 
         t_loss = model.base_loss(tx, ty)
 
@@ -209,12 +219,12 @@ def main(args):
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
 
-        if i % args.update_interval == 0 and 'LCD' in args.method:
-            ppc = getPPC(args, model, t_unlabeled_test_loader)
-            # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
-            # s_iter = iter(s_train_loader)
-            # next(islice(s_iter, i, None))
-            model.train()
+        # if i % args.update_interval == 0 and 'LCD' in args.method:
+        #     ppc = getPPC(args, model, t_unlabeled_test_loader)
+        #     # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+        #     # s_iter = iter(s_train_loader)
+        #     # next(islice(s_iter, i, None))
+        #     model.train()
         
 
     save(args.mdh.getModelPath(), model=model)

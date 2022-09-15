@@ -67,8 +67,8 @@ class ResModel(nn.Module):
                     params += [{'params': [v], 'base_lr': lr, 'lr': lr}]
         params += [{'params': self.c.parameters(), 'base_lr': lr, 'lr': lr}]
         return params
-    def get_features(self, x):
-        return self.c.get_features(self.f(x))
+    def get_features(self, x, reverse=False):
+        return self.c.get_features(self.f(x), reverse=reverse)
     
     def get_predictions(self, x):
         return self.c.get_predictions(x)

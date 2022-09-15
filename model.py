@@ -110,15 +110,11 @@ class VGGBase(nn.Module):
 # -
 
 class torch_prototypical_classifier(nn.Module):
-    def __init__(self, center=None):
+    def __init__(self, center):
         super(torch_prototypical_classifier, self).__init__()
-        self.center = None
-        if center is not None:
-            self.update_center(center)
-    def update_center(self, c):
-        self.center = c
-        self.center.require_grad = False
-
+        self.center = center.require_grad_(False)
+    def update_center(self, c, idx, p=0.99):
+        self.center[idx] = p * self.center[idx] + (1 - p) * c[idx]
     @torch.no_grad()
     def forward(self, x, T=1.0):
         dist = torch.cdist(x, self.center)
