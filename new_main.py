@@ -38,6 +38,7 @@ def arguments_parsing():
     p.add('--alpha', type=float, default=0.8)
     p.add('--beta', type=float, default=0.5)
     p.add('--lamda', type=float, default=0.1)
+    p.add('--gamma', type=float, default=0.99)
 
     p.add('--eval_interval', type=int, default=500)
     p.add('--log_interval', type=int, default=100)
@@ -171,7 +172,7 @@ def main(args):
 
                 uc = torch.stack([uf[up==i].mean(dim=0) for i in range(args.dataset['num_classes'])])
                 idx = torch.unique(up)
-                ppc.update_center(uc, idx)
+                ppc.update_center(uc, idx, args.gamma)
             model.train()
         elif 'NL' in args.method:
             sx, sy = next(s_iter)
@@ -230,7 +231,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr', 'gamma'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
