@@ -112,7 +112,7 @@ class VGGBase(nn.Module):
 class torch_prototypical_classifier(nn.Module):
     def __init__(self, center):
         super(torch_prototypical_classifier, self).__init__()
-        self.center = center.require_grad_(False)
+        self.center = center.requires_grad_(False)
     def update_center(self, c, idx, p=0.99):
         self.center[idx] = p * self.center[idx] + (1 - p) * c[idx]
     @torch.no_grad()
