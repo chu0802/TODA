@@ -88,11 +88,11 @@ def load(path, **models):
     for m, v in models.items():
         v.load_state_dict(state_dict[m])
 
-def getPPC(args, model, label, s_loader, t_loader):
-    _, t_feat = get_prediction(t_loader, model)
-    _, s_feat = get_prediction(s_loader, model)
+def getPPC(args, model, t_loader):
+    t_label, t_feat = get_prediction(t_loader, model)
+    t_label = t_label.argmax(dim=1)
 
-    centers = torch.vstack([t_feat[label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+    centers = torch.vstack([t_feat[t_label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
 
     ppc = torch_prototypical_classifier(centers)
 
@@ -116,23 +116,23 @@ def main(args):
     opt = torch.optim.SGD(params, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
     lr_scheduler = LR_Scheduler(opt, args.num_iters)
 
-    if 'LC' in args.method:
-        s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+    # if 'LC' in args.method:
+    #     s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
 
-        model_path = args.mdh.gh.getModelPath(args.init)
-        init_model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
-        load(model_path, model=init_model)
-        init_model.cuda()
+    #     model_path = args.mdh.gh.getModelPath(args.init)
+    #     init_model = ResModel('resnet34', output_dim=args.dataset['num_classes'])
+    #     load(model_path, model=init_model)
+    #     init_model.cuda()
 
-        LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
-        LABEL = LABEL.argmax(dim=1)
+    #     LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
+    #     LABEL = LABEL.argmax(dim=1)
 
-        ppc = getPPC(args, model, LABEL, s_test_loader, t_unlabeled_test_loader)
+    #     ppc = getPPC(args, model, LABEL, s_test_loader, t_unlabeled_test_loader)
         
-        # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
-    else:
-        s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
-
+    #     # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
+    # else:
+    #     s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+    s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
     torch.cuda.empty_cache()
 
     s_iter = iter(s_train_loader)
@@ -144,10 +144,12 @@ def main(args):
     writer = SummaryWriter(args.mdh.getLogPath())
     writer.add_text('Hash', args.mdh.getHashStr())
 
+    ppc = None
+
     for i in range(1, args.num_iters+1):
         opt.zero_grad()
 
-        if 'LC' in args.method:
+        if 'LC' in args.method and i > args.update_interval:
             sx, sy = next(s_iter)
             sx, sy = sx.float().cuda(), sy.long().cuda()
 
@@ -193,6 +195,8 @@ def main(args):
 
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
+            # writer.add_scalar('Loss/l_loss', l_loss.mean().item(), i)
+            # writer.add_scalar('Loss/soft_loss', soft_loss.mean().item(), i)
             writer.add_scalar('Loss/s_loss', s_loss.item(), i)
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
             if 'MME' in args.method:
@@ -204,21 +208,19 @@ def main(args):
             # writer.add_scalar('Acc/s_acc.', s_acc, i)
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
+
         if i % args.update_interval == 0 and 'LCD' in args.method:
-            ppc = getPPC(args, model, LABEL, s_test_loader, t_unlabeled_test_loader)
+            ppc = getPPC(args, model, t_unlabeled_test_loader)
             # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
             # s_iter = iter(s_train_loader)
             # next(islice(s_iter, i, None))
             model.train()
-        if args.label_update_interval > 0 and i % args.label_update_interval == 0 and 'LCD' in args.method:
-            LABEL, _ = get_prediction(t_unlabeled_test_loader, model)
-            LABEL = LABEL.argmax(dim=1)
-            model.train()
+        
 
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr', 'label_update_interval'])
+    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]
