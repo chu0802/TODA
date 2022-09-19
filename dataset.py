@@ -8,7 +8,7 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import ToTensor
 from torch.utils.data import Dataset
-
+from randaugment import RandAugmentMC
 import numpy as np
 import random
 from PIL import Image
@@ -28,7 +28,15 @@ class TransformNormal(object):
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                        std=[0.229, 0.224, 0.225])])
+                                        std=[0.229, 0.224, 0.225])]),
+            'strong': transforms.Compose([
+                transforms.Resize([256, 256]),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(224),
+                RandAugmentMC(n=2, m=10),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ])
         }
         self.mode = 'train' if train else 'test'
     def __call__(self, x):
@@ -54,7 +62,10 @@ def get_loaders(args):
     t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(train=False))
     t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
 
-    t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
+    if 'CDAC' in args.method:
+        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True), strong_transform=TransformNormal(mode='strong'))
+    else:
+        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=True))
     t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize*2, train=True)
     
     t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(train=False))
@@ -81,7 +92,7 @@ def pil_loader(path: str):
 
 
 class ImageList(Dataset):
-    def __init__(self, root, idx_path, transform):
+    def __init__(self, root, idx_path, transform, strong_transform=None):
         if not isinstance(root, Path):
             root = Path(root)
         with open(idx_path, 'r') as f:
@@ -90,11 +101,17 @@ class ImageList(Dataset):
         self.imgs = [(root / p, int(l)) for p, l in paths]
         self.loader = pil_loader
         self.transform = transform
+        self.strong_transform = strong_transform
     def __len__(self):
         return len(self.imgs)
     def __getitem__(self, idx):
         path, label = self.imgs[idx]
-        return self.transform(self.loader(path)), label
+        img = self.loader(path)
+        if self.strong_transform:
+            img1 = self.strong_transform(img)
+            img2 = self.strong_transform(img)
+            return self.transform(img), label, img1, img2
+        return self.transform(img), label
 
 class LabelCorrectionImageList(ImageList):
     def __init__(self, root, idx_path, transform, target):
