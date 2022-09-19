@@ -19,6 +19,7 @@ from util import set_seed
 from dataset import get_loaders, LabelCorrectionImageList, LabelTransformImageFolder, ImageList, TransformNormal, labeled_data_sampler, CustomSubset, FeatureSet, load_dloader, MixPseudoDataset, MixupDataset, CenterDataset, load_data, load_img_data, load_train_val_data, load_img_dset, load_img_dloader, new_load_img_dloader
 from evaluation import evaluation, get_features, get_prediction
 from mdh import ModelHandler
+from cdac_loss import cdac_loss, sigmoid_rampup, BCE_softlabels
 
 def arguments_parsing():
     p = configargparse.ArgumentParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
@@ -144,6 +145,9 @@ def main(args):
         LABEL = LABEL.argmax(dim=1)
 
         ppc = getPPC(args, model, t_unlabeled_test_loader, LABEL)
+
+    if 'CDAC' in args.method:
+        BCE = BCE_softlabels().cuda()
     
     torch.cuda.empty_cache()
 
@@ -185,18 +189,28 @@ def main(args):
         tx, ty = next(l_iter)
         tx, ty = tx.float().cuda(), ty.long().cuda()
 
-        ux, _ = next(u_iter)
-        ux = ux.float().cuda()
         t_loss = model.base_loss(tx, ty)
 
         loss = args.beta * s_loss + (1-args.beta) * t_loss
         
         loss.backward()
         opt.step()
-
+        
         if 'MME' in args.method:
             opt.zero_grad()
+            ux, _ = next(u_iter)
+            ux = ux.float().cuda()
+            
             u_loss = model.mme_loss(ux, args.lamda)
+            u_loss.backward()
+            opt.step()
+        elif 'CDAC' in args.method:
+            w_cons = 30 * sigmoid_rampup(i, 2000)
+            opt.zero_grad()
+            ux, _, ux1, ux2 = next(u_iter)
+            ux, ux1, ux2 = ux.float().cuda(), ux1.float().cuda(), ux2.float().cuda()
+            aac_loss, pl_loss, con_loss = cdac_loss(args, model, ux=ux, ux1=ux1, ux2=ux2, target=None, BCE=BCE, w_cons=w_cons)
+            u_loss = aac_loss + pl_loss + con_loss
             u_loss.backward()
             opt.step()
 
@@ -208,6 +222,10 @@ def main(args):
             writer.add_scalar('Loss/t_loss', t_loss.item(), i)
             if 'MME' in args.method:
                 writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
+            elif 'CDAC' in args.method:
+                writer.add_scalar('Loss/aac', -aac_loss.item(), i)
+                writer.add_scalar('Loss/pl', pl_loss.item(), i)
+                writer.add_scalar('Loss/con', con_loss.item(), i)
 
         if i % args.eval_interval == 0:
             # s_acc = evaluation(s_test_loader, model)
