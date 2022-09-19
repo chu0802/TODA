@@ -89,15 +89,10 @@ def load(path, **models):
     for m, v in models.items():
         v.load_state_dict(state_dict[m])
 
-def getPPC(args, model, t_loader, init_model=None):
-    if init_model:
-        t_label, _ = get_prediction(t_loader, init_model)
-        _, t_feat = get_prediction(t_loader, model)
-    else:
-        t_label, t_feat = get_prediction(t_loader, model)
-    t_label = t_label.argmax(dim=1)
+def getPPC(args, model, t_loader, label):
+    _, t_feat = get_prediction(t_loader, model)
 
-    centers = torch.vstack([t_feat[t_label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
+    centers = torch.vstack([t_feat[label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
 
     ppc = torch_prototypical_classifier(centers)
 
@@ -145,7 +140,10 @@ def main(args):
         load(model_path, model=init_model)
         init_model.cuda()
 
-        ppc = getPPC(args, model, t_unlabeled_test_loader, init_model)
+        LABEL, _ = get_prediction(t_unlabeled_test_loader, init_model)
+        LABEL = LABEL.argmax(dim=1)
+
+        ppc = getPPC(args, model, t_unlabeled_test_loader, LABEL)
     
     torch.cuda.empty_cache()
 
@@ -218,8 +216,7 @@ def main(args):
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
         if i % args.update_interval == 0 and 'LC' in args.method:
-        # if i == args.update_interval and 'LC' in args.method:
-            ppc = getPPC(args, model, t_unlabeled_test_loader)
+            ppc = getPPC(args, model, t_unlabeled_test_loader, LABEL)
             model.train()
 
     save(args.mdh.getModelPath(), model=model)
