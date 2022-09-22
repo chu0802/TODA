@@ -92,20 +92,10 @@ def load(path, **models):
 
 def getPPC(args, model, t_loader, label):
     _, t_feat = get_prediction(t_loader, model)
-
     centers = torch.vstack([t_feat[label == i].mean(dim=0) for i in range(args.dataset['num_classes'])])
-
     ppc = torch_prototypical_classifier(centers)
 
     return ppc
-
-    # soft_labels = ppc(s_feat, args.T).detach().cpu().numpy()
-
-    # root, s_name = Path(args.dataset['path']), args.dataset['domains'][args.source]
-    # s_train_set = LabelCorrectionImageList(root, root / f'{s_name}_list.txt', TransformNormal(train=True), soft_labels)
-    # s_train_loader = load_img_dloader(args, s_train_set, train=True)
-
-    # return s_train_loader
 
 def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device
