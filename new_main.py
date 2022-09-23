@@ -25,6 +25,7 @@ def arguments_parsing():
     p = configargparse.ArgumentParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
     p.add('--config', is_config_file=True, default='./new_config.yaml')
     p.add('--device', type=str, default='0')
+    p.add('--mode', type=str, default='ssda')
     p.add('--method', type=str, default='base')
     # choosing strategies, and models, and datasets
     p.add('--dataset', type=str, default='OfficeHome')
@@ -123,7 +124,10 @@ def main(args):
     #     # s_train_loader = getPPCLoader(args, model, s_test_loader, t_unlabeled_test_loader)
     # else:
     #     s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
-    s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+    if args.mode == 'uda':
+        s_train_loader, s_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
+    elif args.mode == 'ssda':
+        s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader = get_loaders(args)
     
     if 'LC' in args.method:
         model_path = args.mdh.gh.getModelPath(args.init)
@@ -142,8 +146,10 @@ def main(args):
     torch.cuda.empty_cache()
 
     s_iter = iter(s_train_loader)
-    l_iter = iter(t_labeled_train_loader)
     u_iter = iter(t_unlabeled_train_loader)
+
+    if args.mode == 'ssda':
+        l_iter = iter(t_labeled_train_loader)
 
     model.train()
 
@@ -176,12 +182,15 @@ def main(args):
             sx, sy = sx.float().cuda(), sy.long().cuda()
             s_loss = model.base_loss(sx, sy)
 
-        tx, ty = next(l_iter)
-        tx, ty = tx.float().cuda(), ty.long().cuda()
+        if args.mode == 'uda':
+            loss = s_loss
+        elif args.mode == 'ssda':
+            tx, ty = next(l_iter)
+            tx, ty = tx.float().cuda(), ty.long().cuda()
 
-        t_loss = model.base_loss(tx, ty)
+            t_loss = model.base_loss(tx, ty)
 
-        loss = args.beta * s_loss + (1-args.beta) * t_loss
+            loss = args.beta * s_loss + (1-args.beta) * t_loss
         
         loss.backward()
         opt.step()
@@ -209,7 +218,8 @@ def main(args):
         if i % args.log_interval == 0:
             writer.add_scalar('LR', lr_scheduler.get_lr(), i)
             writer.add_scalar('Loss/s_loss', s_loss.item(), i)
-            writer.add_scalar('Loss/t_loss', t_loss.item(), i)
+            if args.mode == 'ssda':
+                writer.add_scalar('Loss/t_loss', t_loss.item(), i)
             if 'MME' in args.method:
                 writer.add_scalar('Loss/u_loss', -u_loss.item(), i)
             elif 'CDAC' in args.method:
@@ -230,7 +240,7 @@ def main(args):
     save(args.mdh.getModelPath(), model=model)
 if __name__ == '__main__':
     args = arguments_parsing()
-    mdh = ModelHandler(args, keys=['dataset', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
+    mdh = ModelHandler(args, keys=['dataset', 'mode', 'method', 'source', 'target', 'seed', 'num_iters', 'alpha', 'T', 'init', 'note', 'update_interval', 'lr'])
     
     # replace the configuration
     args.dataset = args.dataset_cfg[args.dataset]

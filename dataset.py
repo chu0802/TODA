@@ -47,8 +47,6 @@ def get_loaders(args):
     s_name, t_name = args.dataset['domains'][args.source], args.dataset['domains'][args.target]
 
     s_idx_path = root / f'{s_name}_list.txt'
-    t_train_idx_path = root / f'{t_name}_train_3.txt'
-    t_test_idx_path = root / f'{t_name}_test_3.txt'
 
     s_train_set = ImageList(root, s_idx_path, transform=TransformNormal(mode='train'))
     s_train_loader = load_img_dloader(args, s_train_set, train=True)
@@ -56,22 +54,36 @@ def get_loaders(args):
     s_test_set = ImageList(root, s_idx_path, transform=TransformNormal(mode='test'))
     s_test_loader = load_img_dloader(args, s_test_set, bsize=args.bsize*2, train=False)
 
-    t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(mode='train'))
-    t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+    if args.mode == 'uda':
+        t_idx_path = root / f'{t_name}_list.txt'
 
-    t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(mode='test'))
-    t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
+        t_unlabeled_train_set = ImageList(root, t_idx_path, transform=TransformNormal(mode='train'))
+        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize*2, train=True)
+        
+        t_unlabeled_test_set = ImageList(root, t_idx_path, transform=TransformNormal(mode='test'))
+        t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, bsize=args.bsize*2, train=False)
 
-    if 'CDAC' in args.method:
-        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='train'), strong_transform=TransformNormal(mode='strong'))
-    else:
-        t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='train'))
-    t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize*2, train=True)
-    
-    t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='test'))
-    t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, bsize=args.bsize*2, train=False)
+        return s_train_loader, s_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader
+    elif args.mode == 'ssda':
+        t_train_idx_path = root / f'{t_name}_train_3.txt'
+        t_test_idx_path = root / f'{t_name}_test_3.txt'
 
-    return s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader
+        t_labeled_train_set = ImageList(root, t_train_idx_path, transform=TransformNormal(mode='train'))
+        t_labeled_train_loader = load_img_dloader(args, t_labeled_train_set, train=True)
+
+        t_labeled_test_set = ImageList(root, t_train_idx_path, transform=TransformNormal(mode='test'))
+        t_labeled_test_loader = load_img_dloader(args, t_labeled_test_set, train=False)
+
+        if 'CDAC' in args.method:
+            t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='train'), strong_transform=TransformNormal(mode='strong'))
+        else:
+            t_unlabeled_train_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='train'))
+        t_unlabeled_train_loader = load_img_dloader(args, t_unlabeled_train_set, bsize=args.bsize*2, train=True)
+        
+        t_unlabeled_test_set = ImageList(root, t_test_idx_path, transform=TransformNormal(mode='test'))
+        t_unlabeled_test_loader = load_img_dloader(args, t_unlabeled_test_set, bsize=args.bsize*2, train=False)
+
+        return s_train_loader, s_test_loader, t_labeled_train_loader, t_labeled_test_loader, t_unlabeled_train_loader, t_unlabeled_test_loader
 
 def labeled_data_sampler(dset, shot=1, seed=1362):
     rng = np.random.default_rng(seed)
