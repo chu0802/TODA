@@ -233,7 +233,7 @@ def main(args):
             t_acc = evaluation(t_unlabeled_test_loader, model)
             writer.add_scalar('Acc/t_acc.', t_acc, i)
             model.train()
-        if i % args.update_interval == 0 and 'LC' in args.method:
+        if args.update_interval > 0 and i % args.update_interval == 0 and 'LC' in args.method:
             ppc = getPPC(args, model, t_unlabeled_test_loader, LABEL)
             model.train()
 
