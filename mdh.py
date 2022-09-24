@@ -21,7 +21,7 @@ class GlobalHandler:
         self.model_dir = self.working_dir / 'model'
         self.log_dir = self.working_dir / 'log'
         self.feature_dir = self.working_dir / 'feature'
-        self.table_path = self.working_dir / 'mdh/mdh_log.pk'
+        self.table_path = self.working_dir / 'mdh_log/mdh_log.pk'
 
     def __repr__(self):
         return f"GlobalHandler(working_dir='{self.working_dir}')"
